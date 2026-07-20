@@ -70,3 +70,40 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'PROFESSOR') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
+    const professorId = (session.user as any).id;
+    const { id, name, username, password } = await request.json();
+
+    if (!id) return NextResponse.json({ error: 'Falta el ID del alumno' }, { status: 400 });
+
+    // Check if new username is taken by someone else
+    const existing = await query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, id]);
+    if (existing.rows.length > 0) {
+      return NextResponse.json({ error: 'El nombre de usuario ya está en uso por otra persona' }, { status: 409 });
+    }
+
+    if (password && password.trim() !== '') {
+      const passwordHash = await bcrypt.hash(password, 10);
+      await query(
+        'UPDATE users SET name = $1, username = $2, password_hash = $3 WHERE id = $4 AND professor_id = $5 AND role = $6',
+        [name, username, passwordHash, id, professorId, 'ALUMNO']
+      );
+    } else {
+      await query(
+        'UPDATE users SET name = $1, username = $2 WHERE id = $3 AND professor_id = $4 AND role = $5',
+        [name, username, id, professorId, 'ALUMNO']
+      );
+    }
+
+    return NextResponse.json({ message: 'Alumno actualizado correctamente' });
+  } catch (error) {
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+  }
+}

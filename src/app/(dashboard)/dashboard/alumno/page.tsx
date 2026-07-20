@@ -7,6 +7,8 @@ import LogoutButton from "@/components/ui/LogoutButton";
 export default function AlumnoDashboard() {
   const [anamnesis, setAnamnesis] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("entreno");
 
   useEffect(() => {
     fetch('/api/alumno/anamnesis')
@@ -29,16 +31,91 @@ export default function AlumnoDashboard() {
     );
   }
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "entreno":
+        return <RoutineViewer />;
+      case "progreso":
+        return <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--foreground-muted)' }}><span style={{ fontSize: '3rem' }}>📈</span><h2 style={{ color: 'var(--neon-blue)' }}>Progreso</h2><p>Próximamente verás tu evolución aquí.</p></div>;
+      case "metricas":
+        return <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--foreground-muted)' }}><span style={{ fontSize: '3rem' }}>📊</span><h2 style={{ color: 'var(--neon-green)' }}>Métricas</h2><p>Tus PRs y estadísticas estarán disponibles pronto.</p></div>;
+      case "perfil":
+        return <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--foreground-muted)' }}><span style={{ fontSize: '3rem' }}>👤</span><h2 style={{ color: 'var(--neon-fuchsia)' }}>Mi Perfil</h2><p>Configuración de tu cuenta próximamente.</p></div>;
+      default:
+        return <RoutineViewer />;
+    }
+  };
+
   return (
-    <div style={{padding: '2rem', maxWidth: '1200px', margin: '0 auto'}}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{color: 'var(--neon-fuchsia)', fontSize: '2rem', margin: 0}}>Mi Entrenamiento</h1>
-        <LogoutButton />
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--background)' }}>
+      {/* Sidebar */}
+      <div style={{ 
+        width: sidebarOpen ? '250px' : '60px', 
+        backgroundColor: 'var(--surface)', 
+        borderRight: '1px solid var(--border)', 
+        transition: 'width 0.3s ease',
+        display: 'flex', 
+        flexDirection: 'column',
+        position: 'relative',
+        zIndex: 100
+      }}>
+        {/* Toggle Button */}
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)} 
+          style={{ 
+            background: 'none', border: 'none', color: 'var(--neon-fuchsia)', 
+            padding: '1rem', cursor: 'pointer', textAlign: sidebarOpen ? 'right' : 'center',
+            fontSize: '1.2rem', fontWeight: 'bold', borderBottom: '1px solid var(--surface-hover)'
+          }}
+        >
+          {sidebarOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Navigation Items */}
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem 0' }}>
+          {[
+            { id: "entreno", icon: "💪", label: "Entreno", color: "var(--neon-fuchsia)" },
+            { id: "progreso", icon: "📈", label: "Progreso", color: "var(--neon-blue)" },
+            { id: "metricas", icon: "📊", label: "Métricas", color: "var(--neon-green)" },
+            { id: "perfil", icon: "👤", label: "Perfil", color: "#f59e0b" }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); if (window.innerWidth < 768) setSidebarOpen(false); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '1rem',
+                padding: '1rem', background: activeTab === tab.id ? 'var(--surface-hover)' : 'transparent',
+                border: 'none', borderRight: activeTab === tab.id ? `3px solid ${tab.color}` : '3px solid transparent',
+                color: activeTab === tab.id ? tab.color : 'var(--foreground-muted)',
+                cursor: 'pointer', transition: 'all 0.2s',
+                overflow: 'hidden', whiteSpace: 'nowrap'
+              }}
+              title={!sidebarOpen ? tab.label : ''}
+            >
+              <span style={{ fontSize: '1.25rem', width: '30px', textAlign: 'center' }}>{tab.icon}</span>
+              <span style={{ opacity: sidebarOpen ? 1 : 0, transition: 'opacity 0.2s', fontWeight: 'bold' }}>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Logout (Sidebar Bottom) */}
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--surface-hover)', textAlign: sidebarOpen ? 'left' : 'center' }}>
+          <button 
+            onClick={() => { window.location.href = '/api/auth/signout'; }} 
+            style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', padding: '0.5rem 0' }}
+            title={!sidebarOpen ? "Cerrar Sesión" : ""}
+          >
+            <span style={{ fontSize: '1.25rem', width: '30px', textAlign: 'center' }}>🚪</span>
+            <span style={{ opacity: sidebarOpen ? 1 : 0, transition: 'opacity 0.2s', fontWeight: 'bold' }}>Salir</span>
+          </button>
+        </div>
       </div>
-      
-      <div style={{backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)'}}>
-        <h2 style={{color: 'var(--neon-blue)', marginBottom: '1rem'}}>Rutina Activa</h2>
-        <RoutineViewer />
+
+      {/* Main Content Area */}
+      <div style={{ flex: 1, padding: '2rem', maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
+        <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
+          {renderTabContent()}
+        </div>
       </div>
     </div>
   );

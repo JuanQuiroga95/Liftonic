@@ -29,6 +29,8 @@ type RoutineWeek = {
   days: RoutineDay[];
 };
 
+import { useRef } from "react";
+
 function ExerciseAutocomplete({ 
   exercises, 
   value, 
@@ -43,6 +45,7 @@ function ExerciseAutocomplete({
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   // New exercise state
   const [newName, setNewName] = useState("");
@@ -52,9 +55,23 @@ function ExerciseAutocomplete({
 
   // Initialize search with current value if exists
   useEffect(() => {
-    const ex = exercises.find(e => e.id === value);
-    if (ex) setSearch(ex.name + (ex.variation ? ` (${ex.variation})` : ''));
+    if (value) {
+      const ex = exercises.find(e => e.id === value);
+      if (ex) setSearch(ex.name + (ex.variation ? ` (${ex.variation})` : ''));
+    } else {
+      setSearch("");
+    }
   }, [value, exercises]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [wrapperRef]);
 
   const filtered = exercises.filter(e => 
     (e.name + " " + (e.variation || "")).toLowerCase().includes(search.toLowerCase())
@@ -70,9 +87,7 @@ function ExerciseAutocomplete({
       });
       const data = await res.json();
       if (data.id) {
-        onRefreshExercises(); // this needs to be passed down or handled by lifting state, but we don't have it easily.
-        // Wait, onRefreshExercises is tricky because RoutineBuilder doesn't have fetchEjercicios.
-        // I will add a window.dispatchEvent for a custom event, or pass a callback.
+        onRefreshExercises();
         onChange(data.id);
         setIsCreating(false);
         setIsOpen(false);
@@ -81,6 +96,12 @@ function ExerciseAutocomplete({
       alert("Error creating exercise");
     }
     setSaving(false);
+  };
+
+  const handleClear = () => {
+    onChange("");
+    setSearch("");
+    setIsOpen(false);
   };
 
   if (isCreating) {
@@ -99,17 +120,28 @@ function ExerciseAutocomplete({
   }
 
   return (
-    <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-      <input 
-        value={search}
-        onChange={e => {
-          setSearch(e.target.value);
-          setIsOpen(true);
-        }}
-        onFocus={() => setIsOpen(true)}
-        placeholder="Buscar o crear ejercicio..."
-        style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }}
-      />
+    <div ref={wrapperRef} style={{ position: 'relative', marginBottom: '0.5rem' }}>
+      <div style={{ position: 'relative' }}>
+        <input 
+          value={search}
+          onChange={e => {
+            setSearch(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Buscar o crear ejercicio..."
+          style={{ width: '100%', padding: '0.5rem', paddingRight: '2rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }}
+        />
+        {value && (
+          <button 
+            onClick={handleClear}
+            style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: '1rem', padding: '0' }}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      
       {isOpen && (
         <div style={{ position: 'absolute', zIndex: 10, width: '100%', maxHeight: '200px', overflowY: 'auto', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', marginTop: '0.25rem', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
           {filtered.length > 0 ? (
