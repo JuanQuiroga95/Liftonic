@@ -3,12 +3,18 @@
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 
+type ExerciseSet = {
+  id: string;
+  reps: number;
+  rpe: number;
+  weight: number;
+  type: string;
+};
+
 type ExerciseBlock = {
   id: string;
   exercise_id: string;
-  target_sets: number;
-  target_reps: string;
-  target_weight: number;
+  sets: ExerciseSet[];
 };
 
 type RoutineDay = {
