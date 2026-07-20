@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import styles from "./page.module.css";
 import { query } from "@/lib/db";
 import Link from "next/link";
+import ProfessorManager from "./ProfessorManager";
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -41,23 +42,7 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)'}}>
-        <h2 style={{ marginBottom: '1rem', color: 'var(--neon-blue)'}}>Gestión de Profesores</h2>
-        <p style={{ color: 'var(--foreground-muted)', marginBottom: '2rem' }}>
-          Desde aquí podrás crear cuentas para tus profesores, quienes a su vez podrán gestionar a sus alumnos.
-        </p>
-        <button style={{ 
-          padding: '0.75rem 1.5rem', 
-          backgroundColor: 'var(--neon-fuchsia)', 
-          color: 'var(--background)', 
-          border: 'none', 
-          borderRadius: '0.5rem', 
-          fontWeight: 'bold',
-          cursor: 'pointer'
-        }}>
-          + Nuevo Profesor
-        </button>
-      </div>
+      <ProfessorManager />
     </div>
   );
 }
