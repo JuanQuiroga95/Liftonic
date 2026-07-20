@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import styles from "./page.module.css";
-import { upload } from "@vercel/blob/client";
 
 export default function ProfessorDashboard() {
   const [activeTab, setActiveTab] = useState("alumnos");
