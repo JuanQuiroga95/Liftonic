@@ -53,7 +53,7 @@ export default function ProfessorDashboard() {
         <>
           {activeTab === 'alumnos' && <StudentManager students={students} onReload={fetchAlumnos} />}
           {activeTab === 'ejercicios' && <ExerciseLibrary exercises={exercises} onReload={fetchEjercicios} />}
-          {activeTab === 'rutinas' && <RoutineBuilder students={students} exercises={exercises} />}
+          {activeTab === 'rutinas' && <RoutineBuilder students={students} exercises={exercises} onRefreshExercises={fetchEjercicios} />}
         </>
       )}
     </div>
@@ -177,6 +177,8 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
 
 function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: () => void }) {
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [variation, setVariation] = useState("");
   const [mediaType, setMediaType] = useState("LINK");
   const [mediaUrl, setMediaUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -199,17 +201,22 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       }
     }
 
-    if (!finalUrl) {
+    if (!finalUrl && mediaType !== "NONE") {
       setLoading(false);
       return;
     }
 
     await fetch('/api/profesor/exercises', {
       method: "POST",
-      body: JSON.stringify({ name, media: [{ type: mediaType, url: finalUrl }] })
+      body: JSON.stringify({ 
+        name, 
+        description, 
+        variation, 
+        media: finalUrl ? [{ type: mediaType, url: finalUrl }] : [] 
+      })
     });
 
-    setName(""); setMediaUrl(""); setFile(null);
+    setName(""); setDescription(""); setVariation(""); setMediaUrl(""); setFile(null);
     onReload();
     setLoading(false);
   };
@@ -219,23 +226,31 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       <h2>Biblioteca de Ejercicios</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', marginBottom: '2rem' }}>
         <input placeholder="Nombre del Ejercicio" value={name} onChange={e => setName(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+        <input placeholder="Variación (Opcional, ej: Inclinado, Mancuernas)" value={variation} onChange={e => setVariation(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+        <textarea placeholder="Descripción / Notas (Opcional)" value={description} onChange={e => setDescription(e.target.value)} rows={3} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+        
         <select value={mediaType} onChange={e => setMediaType(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }}>
+          <option value="NONE">Sin Multimedia (Solo texto)</option>
           <option value="LINK">Link de YouTube/Insta</option>
           <option value="UPLOAD">Subir Archivo (Cloudinary)</option>
         </select>
-        {mediaType === "LINK" ? (
+        
+        {mediaType === "LINK" && (
           <input placeholder="URL del video" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
-        ) : (
+        )}
+        {mediaType === "UPLOAD" && (
           <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} required style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         )}
+        
         <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{loading ? 'Guardando...' : 'Crear Ejercicio'}</button>
       </form>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
         {exercises.map(e => (
           <div key={e.id} style={{ padding: '1rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{e.name}</h3>
-            {e.media && e.media[0] && (
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{e.name} {e.variation && <span style={{color: 'var(--neon-blue)', fontSize: '0.875rem'}}>({e.variation})</span>}</h3>
+            {e.description && <p style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)', marginBottom: '0.5rem' }}>{e.description}</p>}
+            {e.media && e.media[0] && e.media[0].url && (
               <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none' }}>Ver Multimedia</a>
             )}
           </div>

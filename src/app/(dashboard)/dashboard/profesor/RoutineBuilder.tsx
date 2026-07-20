@@ -23,7 +23,115 @@ type RoutineWeek = {
   days: RoutineDay[];
 };
 
-export default function RoutineBuilder({ students, exercises }: { students: any[], exercises: any[] }) {
+function ExerciseAutocomplete({ 
+  exercises, 
+  value, 
+  onChange, 
+  onRefreshExercises 
+}: { 
+  exercises: any[], 
+  value: string, 
+  onChange: (id: string) => void,
+  onRefreshExercises: () => void 
+}) {
+  const [search, setSearch] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  // New exercise state
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newVar, setNewVar] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Initialize search with current value if exists
+  useEffect(() => {
+    const ex = exercises.find(e => e.id === value);
+    if (ex) setSearch(ex.name + (ex.variation ? ` (${ex.variation})` : ''));
+  }, [value, exercises]);
+
+  const filtered = exercises.filter(e => 
+    (e.name + " " + (e.variation || "")).toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleCreate = async () => {
+    if (!newName) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/profesor/exercises', {
+        method: "POST",
+        body: JSON.stringify({ name: newName, description: newDesc, variation: newVar, media: [] })
+      });
+      const data = await res.json();
+      if (data.id) {
+        onRefreshExercises(); // this needs to be passed down or handled by lifting state, but we don't have it easily.
+        // Wait, onRefreshExercises is tricky because RoutineBuilder doesn't have fetchEjercicios.
+        // I will add a window.dispatchEvent for a custom event, or pass a callback.
+        onChange(data.id);
+        setIsCreating(false);
+        setIsOpen(false);
+      }
+    } catch (err) {
+      alert("Error creating exercise");
+    }
+    setSaving(false);
+  };
+
+  if (isCreating) {
+    return (
+      <div style={{ padding: '1rem', backgroundColor: 'var(--surface-hover)', borderRadius: '0.5rem', border: '1px solid var(--border)', marginBottom: '0.5rem' }}>
+        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: 'var(--neon-blue)' }}>Crear Nuevo Ejercicio</h4>
+        <input placeholder="Nombre" value={newName} onChange={e => setNewName(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }} />
+        <input placeholder="Variación (Opcional)" value={newVar} onChange={e => setNewVar(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }} />
+        <textarea placeholder="Descripción (Opcional)" value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={2} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }} />
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button onClick={() => setIsCreating(false)} style={{ flex: 1, padding: '0.5rem', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={handleCreate} disabled={saving} style={{ flex: 1, padding: '0.5rem', background: 'var(--neon-blue)', color: 'var(--background)', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold' }}>{saving ? 'Guardando...' : 'Crear y Usar'}</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+      <input 
+        value={search}
+        onChange={e => {
+          setSearch(e.target.value);
+          setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        placeholder="Buscar o crear ejercicio..."
+        style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }}
+      />
+      {isOpen && (
+        <div style={{ position: 'absolute', zIndex: 10, width: '100%', maxHeight: '200px', overflowY: 'auto', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', marginTop: '0.25rem', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
+          {filtered.length > 0 ? (
+            filtered.map(e => (
+              <div 
+                key={e.id} 
+                onClick={() => { onChange(e.id); setIsOpen(false); setSearch(e.name + (e.variation ? ` (${e.variation})` : '')); }}
+                style={{ padding: '0.5rem', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+              >
+                {e.name} {e.variation && <span style={{ color: 'var(--neon-blue)', fontSize: '0.75rem' }}>({e.variation})</span>}
+              </div>
+            ))
+          ) : (
+            <div style={{ padding: '0.5rem', color: 'var(--foreground-muted)' }}>No se encontraron ejercicios.</div>
+          )}
+          <div 
+            onClick={() => { setIsCreating(true); setNewName(search); setIsOpen(false); }}
+            style={{ padding: '0.5rem', cursor: 'pointer', backgroundColor: 'rgba(255, 0, 128, 0.1)', color: 'var(--neon-fuchsia)', fontWeight: 'bold', textAlign: 'center' }}
+          >
+            + Crear nuevo ejercicio
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function RoutineBuilder({ students, exercises, onRefreshExercises }: { students: any[], exercises: any[], onRefreshExercises: () => void }) {
   const [studentId, setStudentId] = useState("");
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -58,8 +166,6 @@ export default function RoutineBuilder({ students, exercises }: { students: any[
   };
 
   const addExercise = (weekId: string, dayId: string) => {
-    if (exercises.length === 0) return alert("Primero debes crear ejercicios en la biblioteca.");
-    
     setWeeks(weeks.map(w => {
       if (w.id === weekId) {
         return {
@@ -68,7 +174,7 @@ export default function RoutineBuilder({ students, exercises }: { students: any[
               return {
                 ...d, exercises: [...d.exercises, {
                   id: uuidv4(),
-                  exercise_id: exercises[0].id,
+                  exercise_id: exercises.length > 0 ? exercises[0].id : "",
                   target_sets: 4,
                   target_reps: "10",
                   target_weight: 0
@@ -120,6 +226,10 @@ export default function RoutineBuilder({ students, exercises }: { students: any[
   const handleSave = async () => {
     if (!studentId || !title || !startDate || !endDate) return alert("Completa la información general (Alumno, Título, Fechas).");
     
+    // Validate all exercises have an ID
+    const hasEmptyEx = weeks.some(w => w.days.some(d => d.exercises.some(e => !e.exercise_id)));
+    if (hasEmptyEx) return alert("Todos los ejercicios deben estar asignados.");
+
     setSaving(true);
     try {
       const res = await fetch("/api/profesor/routines", {
@@ -194,13 +304,14 @@ export default function RoutineBuilder({ students, exercises }: { students: any[
                           <span style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1}</span>
                           <button onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '0.75rem' }}>X</button>
                         </div>
-                        <select 
-                          value={ex.exercise_id}
-                          onChange={e => updateExercise(week.id, day.id, ex.id, 'exercise_id', e.target.value)}
-                          style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }}
-                        >
-                          {exercises.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-                        </select>
+                        
+                        <ExerciseAutocomplete 
+                          exercises={exercises} 
+                          value={ex.exercise_id} 
+                          onChange={(id) => updateExercise(week.id, day.id, ex.id, 'exercise_id', id)}
+                          onRefreshExercises={onRefreshExercises}
+                        />
+
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <input type="number" placeholder="Series" value={ex.target_sets} onChange={e => updateExercise(week.id, day.id, ex.id, 'target_sets', parseInt(e.target.value))} style={{ width: '33%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }} title="Series" />
                           <input type="text" placeholder="Reps" value={ex.target_reps} onChange={e => updateExercise(week.id, day.id, ex.id, 'target_reps', e.target.value)} style={{ width: '33%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }} title="Repeticiones (Ej: 10, 8-10, Fallo)" />

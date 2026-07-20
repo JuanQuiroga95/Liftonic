@@ -10,11 +10,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const { name, media } = await request.json(); // media is array of { type: 'LINK' | 'UPLOAD', url: string }
+    const { name, description, variation, media } = await request.json(); // media is array of { type: 'LINK' | 'UPLOAD', url: string }
 
     const exerciseRes = await query(
-      'INSERT INTO exercises (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id',
-      [name]
+      'INSERT INTO exercises (name, description, variation) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description, variation = EXCLUDED.variation RETURNING id',
+      [name, description || null, variation || null]
     );
     const exerciseId = exerciseRes.rows[0].id;
 
@@ -37,11 +37,11 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const result = await query(`
-      SELECT e.id, e.name, 
+      SELECT e.id, e.name, e.description, e.variation, 
         json_agg(json_build_object('id', em.id, 'type', em.type, 'url', em.url)) as media
       FROM exercises e
       LEFT JOIN exercise_media em ON e.id = em.exercise_id
-      GROUP BY e.id, e.name
+      GROUP BY e.id, e.name, e.description, e.variation
       ORDER BY e.name ASC
     `);
     
