@@ -435,7 +435,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                           <div style={{ display: 'flex', padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
                             <div style={{ width: '2rem', textAlign: 'center' }}>#</div>
                             <div style={{ flex: 1 }}>REPS</div>
-                            <div style={{ flex: 1 }}>RPE</div>
+                            <div style={{ flex: 1 }}>PROFESOR</div>
                             <div style={{ flex: 1 }}>KG Obj.</div>
                             <div style={{ flex: 1 }}>TIPO</div>
                             <div style={{ width: '2rem' }}></div>

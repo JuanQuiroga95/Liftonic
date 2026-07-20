@@ -233,7 +233,8 @@ function RoutineViewer() {
                           <div style={{ width: '2rem' }}>#</div>
                           <div style={{ flex: 2 }}>KG</div>
                           <div style={{ flex: 1, textAlign: 'center' }}>REPS</div>
-                          <div style={{ flex: 1, textAlign: 'center' }}>RPE</div>
+                          <div style={{ flex: 1, textAlign: 'center' }}>PROF.</div>
+                          <div style={{ flex: 1.5, textAlign: 'center' }}>ASESORADO</div>
                           <div style={{ flex: 1, textAlign: 'center' }}>TIPO</div>
                           <div style={{ width: '2rem', textAlign: 'center' }}>✓</div>
                         </div>
@@ -244,11 +245,14 @@ function RoutineViewer() {
                               <div style={{ width: '2rem', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>
                                 💬
                               </div>
-                              <div style={{ flex: 2, paddingRight: '1rem' }}>
+                              <div style={{ flex: 2, paddingRight: '0.5rem' }}>
                                 <input type="number" placeholder="kg" defaultValue={set.weight} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
                               <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>{set.reps}</div>
-                              <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>{set.rpe}</div>
+                              <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>{set.rpe}</div>
+                              <div style={{ flex: 1.5, textAlign: 'center' }}>
+                                <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              </div>
                               <div style={{ flex: 1, textAlign: 'center', fontSize: '0.875rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
                               <div style={{ width: '2rem', textAlign: 'center' }}>
                                 <input type="checkbox" style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer', accentColor: color.border }} />
