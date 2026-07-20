@@ -39,8 +39,8 @@ export async function POST(request: Request) {
         let orderIndex = 0;
         for (const ex of day.exercises) {
           await query(
-            'INSERT INTO daily_exercises (day_id, exercise_id, order_index, target_sets, target_reps, target_weight) VALUES ($1, $2, $3, $4, $5, $6)',
-            [dayId, ex.exercise_id, orderIndex, ex.target_sets, String(ex.target_reps), ex.target_weight]
+            'INSERT INTO daily_exercises (day_id, exercise_id, order_index, sets) VALUES ($1, $2, $3, $4)',
+            [dayId, ex.exercise_id, orderIndex, JSON.stringify(ex.sets || [])]
           );
           orderIndex++;
         }

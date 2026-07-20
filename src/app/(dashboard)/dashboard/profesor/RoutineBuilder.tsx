@@ -175,9 +175,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                 ...d, exercises: [...d.exercises, {
                   id: uuidv4(),
                   exercise_id: exercises.length > 0 ? exercises[0].id : "",
-                  target_sets: 4,
-                  target_reps: "10",
-                  target_weight: 0
+                  sets: [{ id: uuidv4(), reps: 1, rpe: 8, weight: 0, type: "Top" }]
                 }]
               };
             }
@@ -197,6 +195,88 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
             if (d.id === dayId) {
               return {
                 ...d, exercises: d.exercises.map(e => e.id === exId ? { ...e, [field]: value } : e)
+              };
+            }
+            return d;
+          })
+        };
+      }
+      return w;
+    }));
+  };
+
+  const addSet = (weekId: string, dayId: string, exId: string) => {
+    setWeeks(weeks.map(w => {
+      if (w.id === weekId) {
+        return {
+          ...w, days: w.days.map(d => {
+            if (d.id === dayId) {
+              return {
+                ...d, exercises: d.exercises.map(e => {
+                  if (e.id === exId) {
+                    const lastSet = e.sets[e.sets.length - 1];
+                    return {
+                      ...e,
+                      sets: [...(e.sets || []), { 
+                        id: uuidv4(), 
+                        reps: lastSet ? lastSet.reps : 1, 
+                        rpe: lastSet ? lastSet.rpe : 8, 
+                        weight: lastSet ? lastSet.weight : 0, 
+                        type: "Back" 
+                      }]
+                    };
+                  }
+                  return e;
+                })
+              };
+            }
+            return d;
+          })
+        };
+      }
+      return w;
+    }));
+  };
+
+  const updateSet = (weekId: string, dayId: string, exId: string, setId: string, field: string, value: any) => {
+    setWeeks(weeks.map(w => {
+      if (w.id === weekId) {
+        return {
+          ...w, days: w.days.map(d => {
+            if (d.id === dayId) {
+              return {
+                ...d, exercises: d.exercises.map(e => {
+                  if (e.id === exId) {
+                    return {
+                      ...e,
+                      sets: e.sets.map(s => s.id === setId ? { ...s, [field]: value } : s)
+                    };
+                  }
+                  return e;
+                })
+              };
+            }
+            return d;
+          })
+        };
+      }
+      return w;
+    }));
+  };
+
+  const removeSet = (weekId: string, dayId: string, exId: string, setId: string) => {
+    setWeeks(weeks.map(w => {
+      if (w.id === weekId) {
+        return {
+          ...w, days: w.days.map(d => {
+            if (d.id === dayId) {
+              return {
+                ...d, exercises: d.exercises.map(e => {
+                  if (e.id === exId) {
+                    return { ...e, sets: e.sets.filter(s => s.id !== setId) };
+                  }
+                  return e;
+                })
               };
             }
             return d;
@@ -312,10 +392,50 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                           onRefreshExercises={onRefreshExercises}
                         />
 
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input type="number" placeholder="Series" value={ex.target_sets} onChange={e => updateExercise(week.id, day.id, ex.id, 'target_sets', parseInt(e.target.value))} style={{ width: '33%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }} title="Series" />
-                          <input type="text" placeholder="Reps" value={ex.target_reps} onChange={e => updateExercise(week.id, day.id, ex.id, 'target_reps', e.target.value)} style={{ width: '33%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }} title="Repeticiones (Ej: 10, 8-10, Fallo)" />
-                          <input type="number" placeholder="Kg" value={ex.target_weight} onChange={e => updateExercise(week.id, day.id, ex.id, 'target_weight', parseFloat(e.target.value))} style={{ width: '33%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)' }} title="Peso Objetivo (kg)" />
+                        {/* Tabla de Series */}
+                        <div style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                          <div style={{ display: 'flex', padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                            <div style={{ width: '2rem', textAlign: 'center' }}>#</div>
+                            <div style={{ flex: 1 }}>REPS</div>
+                            <div style={{ flex: 1 }}>RPE</div>
+                            <div style={{ flex: 1 }}>KG Obj.</div>
+                            <div style={{ flex: 1 }}>TIPO</div>
+                            <div style={{ width: '2rem' }}></div>
+                          </div>
+                          
+                          {ex.sets?.map((set: any, sIndex: number) => (
+                            <div key={set.id} style={{ display: 'flex', padding: '0.5rem', borderTop: '1px solid var(--border)', alignItems: 'center', gap: '0.5rem' }}>
+                              <div style={{ width: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--foreground-muted)' }}>{sIndex + 1}</div>
+                              
+                              <div style={{ flex: 1 }}>
+                                <input type="number" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', parseInt(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              </div>
+                              
+                              <div style={{ flex: 1 }}>
+                                <input type="number" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              </div>
+                              
+                              <div style={{ flex: 1 }}>
+                                <input type="number" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              </div>
+                              
+                              <div style={{ flex: 1 }}>
+                                <select value={set.type} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'type', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>
+                                  <option value="Normal">Normal</option>
+                                  <option value="Top" style={{ color: 'var(--neon-pink)' }}>Top</option>
+                                  <option value="Back" style={{ color: '#f59e0b' }}>Back</option>
+                                </select>
+                              </div>
+
+                              <div style={{ width: '2rem', textAlign: 'center' }}>
+                                <button onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          <button onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', padding: '0.75rem', backgroundColor: 'transparent', color: 'var(--foreground-muted)', border: 'none', borderTop: '1px dashed var(--border)', cursor: 'pointer', fontSize: '0.875rem' }}>
+                            + Agregar serie
+                          </button>
                         </div>
                       </div>
                     ))}
