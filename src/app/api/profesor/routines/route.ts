@@ -12,13 +12,12 @@ export async function POST(request: Request) {
 
     const professorId = (session.user as any).id;
     const body = await request.json();
-    const { studentId, title, startDate, endDate, weeks } = body; 
-    // weeks is an array of { number, days: [ { name, exercises: [ { exerciseId, sets, reps, weight } ] } ] }
+    const { student_id, title, start_date, end_date, weeks } = body; 
 
     // 1. Crear Rutina
     const routineRes = await query(
       'INSERT INTO routines (student_id, professor_id, title, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [studentId, professorId, title, startDate, endDate]
+      [student_id, professorId, title, start_date, end_date]
     );
     const routineId = routineRes.rows[0].id;
 
@@ -26,14 +25,14 @@ export async function POST(request: Request) {
     for (const week of weeks) {
       const weekRes = await query(
         'INSERT INTO routine_weeks (routine_id, week_number) VALUES ($1, $2) RETURNING id',
-        [routineId, week.number]
+        [routineId, week.week_number]
       );
       const weekId = weekRes.rows[0].id;
 
       for (const day of week.days) {
         const dayRes = await query(
           'INSERT INTO routine_days (week_id, day_name) VALUES ($1, $2) RETURNING id',
-          [weekId, day.name]
+          [weekId, day.day_name]
         );
         const dayId = dayRes.rows[0].id;
 
@@ -41,7 +40,7 @@ export async function POST(request: Request) {
         for (const ex of day.exercises) {
           await query(
             'INSERT INTO daily_exercises (day_id, exercise_id, order_index, target_sets, target_reps, target_weight) VALUES ($1, $2, $3, $4, $5, $6)',
-            [dayId, ex.exerciseId, orderIndex, ex.sets, ex.reps, ex.weight]
+            [dayId, ex.exercise_id, orderIndex, ex.target_sets, String(ex.target_reps), ex.target_weight]
           );
           orderIndex++;
         }

@@ -48,3 +48,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== 'PROFESSOR') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
+    const professorId = (session.user as any).id;
+    const { searchParams } = new URL(request.url);
+    const studentId = searchParams.get('id');
+
+    if (!studentId) return NextResponse.json({ error: 'Falta el ID' }, { status: 400 });
+
+    // Ensure the student belongs to this professor
+    await query('DELETE FROM users WHERE id = $1 AND professor_id = $2 AND role = $3', [studentId, professorId, 'ALUMNO']);
+    
+    return NextResponse.json({ message: 'Alumno eliminado' });
+  } catch (error) {
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+  }
+}
