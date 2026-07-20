@@ -62,3 +62,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || (session.user as any).role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Falta el ID' }, { status: 400 });
+    }
+
+    await query('DELETE FROM users WHERE id = $1 AND role = $2', [id, 'PROFESSOR']);
+    
+    return NextResponse.json({ message: 'Profesor eliminado' });
+  } catch (error) {
+    console.error('Error eliminando profesor:', error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  }
+}

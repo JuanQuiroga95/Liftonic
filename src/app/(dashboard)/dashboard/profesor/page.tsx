@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import styles from "./page.module.css";
+import LogoutButton from "@/components/ui/LogoutButton";
 
 export default function ProfessorDashboard() {
   const [activeTab, setActiveTab] = useState("alumnos");
@@ -15,13 +16,16 @@ export default function ProfessorDashboard() {
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Panel de Profesor</h1>
-        <div className={styles.tabs}>
-          <button className={activeTab === 'alumnos' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('alumnos')}>Mis Alumnos</button>
-          <button className={activeTab === 'rutinas' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('rutinas')}>Crear Rutina</button>
-          <button className={activeTab === 'ejercicios' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('ejercicios')}>Biblioteca Ejercicios</button>
+      <header className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className={styles.title}>Panel de Profesor</h1>
+          <div className={styles.tabs}>
+            <button className={activeTab === 'alumnos' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('alumnos')}>Mis Alumnos</button>
+            <button className={activeTab === 'rutinas' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('rutinas')}>Crear Rutina</button>
+            <button className={activeTab === 'ejercicios' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('ejercicios')}>Biblioteca Ejercicios</button>
+          </div>
         </div>
+        <LogoutButton />
       </header>
 
       {activeTab === 'alumnos' && (

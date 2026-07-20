@@ -68,6 +68,20 @@ export default function ProfessorManager() {
     setFormLoading(false);
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Estás seguro de que quieres eliminar a este profesor?")) return;
+    try {
+      const res = await fetch(`/api/admin/professors?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchProfessors();
+      } else {
+        alert("Error al eliminar profesor");
+      }
+    } catch (error) {
+      alert("Error de conexión");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -90,12 +104,13 @@ export default function ProfessorManager() {
                 <th>Nombre</th>
                 <th>Usuario</th>
                 <th>Fecha de Alta</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {professors.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className={styles.emptyState}>No hay profesores registrados.</td>
+                  <td colSpan={4} className={styles.emptyState}>No hay profesores registrados.</td>
                 </tr>
               ) : (
                 professors.map((prof) => (
@@ -103,6 +118,14 @@ export default function ProfessorManager() {
                     <td>{prof.name}</td>
                     <td>{prof.username}</td>
                     <td>{new Date(prof.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <button 
+                        onClick={() => handleDelete(prof.id)}
+                        style={{ color: '#ff4d4d', background: 'transparent', border: '1px solid #ff4d4d', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer' }}
+                      >
+                        Eliminar
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

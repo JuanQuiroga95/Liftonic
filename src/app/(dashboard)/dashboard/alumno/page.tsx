@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import AnamnesisForm from "@/components/forms/AnamnesisForm";
+import LogoutButton from "@/components/ui/LogoutButton";
 
 export default function AlumnoDashboard() {
   const [anamnesis, setAnamnesis] = useState<any>(null);
@@ -22,6 +23,7 @@ export default function AlumnoDashboard() {
   if (!anamnesis) {
     return (
       <div style={{padding: '2rem'}}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}><LogoutButton /></div>
         <AnamnesisForm onComplete={() => window.location.reload()} />
       </div>
     );
@@ -29,7 +31,10 @@ export default function AlumnoDashboard() {
 
   return (
     <div style={{padding: '2rem', maxWidth: '1200px', margin: '0 auto'}}>
-      <h1 style={{color: 'var(--neon-fuchsia)', fontSize: '2rem', marginBottom: '2rem'}}>Mi Entrenamiento</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1 style={{color: 'var(--neon-fuchsia)', fontSize: '2rem', margin: 0}}>Mi Entrenamiento</h1>
+        <LogoutButton />
+      </div>
       
       <div style={{backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)'}}>
         <h2 style={{color: 'var(--neon-blue)', marginBottom: '1rem'}}>Rutina Activa</h2>

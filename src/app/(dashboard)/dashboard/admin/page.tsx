@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { query } from "@/lib/db";
 import Link from "next/link";
 import ProfessorManager from "./ProfessorManager";
+import LogoutButton from "@/components/ui/LogoutButton";
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -24,10 +25,11 @@ export default async function AdminDashboard() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>Panel de Administración</h1>
-        <div style={{display: 'flex', gap: '1rem'}}>
+        <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
            <div style={{ color: 'var(--foreground-muted)' }}>
             Hola, <span style={{ color: 'var(--foreground)', fontWeight: 'bold' }}>{session.user?.name}</span>
           </div>
+          <LogoutButton />
         </div>
       </header>
 
