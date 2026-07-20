@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import styles from "./AnamnesisForm.module.css";
 
 export default function AnamnesisForm() {
   const [step, setStep] = useState(1);
@@ -12,10 +13,10 @@ export default function AnamnesisForm() {
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
   return (
-    <div className="w-full max-w-lg mx-auto p-6 bg-surface rounded-2xl shadow-neon-blue border border-border mt-10">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-neon-blue mb-2">Comencemos tu transformación</h2>
-        <p className="text-foreground-muted">Paso {step} de 4: Conociendo tu historial</p>
+    <div className={styles.formContainer}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Comencemos tu transformación</h2>
+        <p className={styles.subtitle}>Paso {step} de 4: Conociendo tu historial</p>
       </div>
 
       <motion.div
@@ -26,41 +27,41 @@ export default function AnamnesisForm() {
         transition={{ duration: 0.3 }}
       >
         {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">1. ¿Hace cuánto entrenas en gimnasio?</label>
-              <input type="text" className="w-full p-3 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:border-neon-pink" placeholder="Ej. 1 año, Nunca..." />
+          <div className={styles.fieldGroup}>
+            <div className={styles.field}>
+              <label className={styles.label}>1. ¿Hace cuánto entrenas en gimnasio?</label>
+              <input type="text" className={styles.input} placeholder="Ej. 1 año, Nunca..." />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">2. ¿Hacés algo más aparte de musculación?</label>
-              <textarea className="w-full p-3 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:border-neon-pink" placeholder="Ej. Fútbol, Natación..."></textarea>
+            <div className={styles.field}>
+              <label className={styles.label}>2. ¿Hacés algo más aparte de musculación?</label>
+              <textarea className={styles.textarea} placeholder="Ej. Fútbol, Natación..."></textarea>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">3. ¿Tenés lesiones o enfermedades de base?</label>
-              <textarea className="w-full p-3 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:border-neon-pink" placeholder="Detalla aquí..."></textarea>
+            <div className={styles.field}>
+              <label className={styles.label}>3. ¿Tenés lesiones o enfermedades de base?</label>
+              <textarea className={styles.textarea} placeholder="Detalla aquí..."></textarea>
             </div>
           </div>
         )}
 
         {/* Other steps would be implemented similarly based on the 13 questions */}
         {step > 1 && (
-          <div className="space-y-6 text-center text-foreground-muted py-10">
+          <div className={styles.placeholder}>
             [Paso {step} en construcción...]
           </div>
         )}
       </motion.div>
 
-      <div className="flex justify-between mt-8">
+      <div className={styles.footer}>
         <button
           onClick={prevStep}
           disabled={step === 1}
-          className="px-6 py-2 rounded-lg bg-surface-hover text-foreground disabled:opacity-50 transition-colors"
+          className={styles.btnBack}
         >
           Atrás
         </button>
         <button
           onClick={step === 4 ? () => console.log("Submit") : nextStep}
-          className="px-6 py-2 rounded-lg bg-neon-blue text-background font-bold shadow-[0_0_15px_rgba(0,229,255,0.4)] hover:shadow-[0_0_25px_rgba(0,229,255,0.6)] transition-shadow"
+          className={styles.btnNext}
         >
           {step === 4 ? "Finalizar" : "Siguiente"}
         </button>
