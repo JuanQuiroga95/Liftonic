@@ -86,14 +86,17 @@ function ExerciseAutocomplete({
         body: JSON.stringify({ name: newName, description: newDesc, variation: newVar, media: [] })
       });
       const data = await res.json();
-      if (data.id) {
+      if (res.ok && data.id) {
         onRefreshExercises();
         onChange(data.id);
+        setSearch(newName + (newVar ? ` (${newVar})` : ''));
         setIsCreating(false);
         setIsOpen(false);
+      } else {
+        alert(data.error || "Error al crear ejercicio en el servidor");
       }
-    } catch (err) {
-      alert("Error creating exercise");
+    } catch (err: any) {
+      alert("Error de conexión al crear ejercicio: " + err.message);
     }
     setSaving(false);
   };
