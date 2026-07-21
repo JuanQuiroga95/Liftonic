@@ -14,6 +14,81 @@ export default function StudentDetailView() {
   const [routine, setRoutine] = useState<any>(null);
   const [activeWeekIndex, setActiveWeekIndex] = useState(0);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+  
+  const [deletingRoutine, setDeletingRoutine] = useState(false);
+  const [savingEx, setSavingEx] = useState<string | null>(null);
+
+  const handleDeleteRoutine = async () => {
+    if (!confirm("¿Estás seguro que deseas eliminar esta rutina? Toda la información y progresos asociados se perderán.")) return;
+    setDeletingRoutine(true);
+    try {
+      const res = await fetch(`/api/profesor/routines/${routine.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setRoutine(null);
+      } else {
+        alert("Error al eliminar la rutina");
+      }
+    } catch (e) {
+      alert("Error de conexión");
+    }
+    setDeletingRoutine(false);
+  };
+
+  const handleSetChange = (exId: string, setId: string, field: string, value: any) => {
+    setRoutine((prev: any) => {
+      const newRoutine = { ...prev };
+      newRoutine.weeks = newRoutine.weeks.map((week: any) => {
+        week.days = week.days.map((day: any) => {
+          day.exercises = day.exercises.map((ex: any) => {
+            if (ex.id === exId) {
+              ex.sets = ex.sets.map((set: any) => {
+                if (set.id === setId) {
+                  return { ...set, [field]: value };
+                }
+                return set;
+              });
+            }
+            return ex;
+          });
+          return day;
+        });
+        return week;
+      });
+      return newRoutine;
+    });
+  };
+
+  const handleSaveSets = async (dailyExerciseId: string, exId: string) => {
+    setSavingEx(exId);
+    try {
+      // Find the sets to save
+      let setsToSave = [];
+      for (const week of routine.weeks) {
+        for (const day of week.days) {
+          for (const ex of day.exercises) {
+            if (ex.id === exId) {
+              setsToSave = ex.sets;
+            }
+          }
+        }
+      }
+
+      const res = await fetch(`/api/profesor/routines/sets/${dailyExerciseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sets: setsToSave })
+      });
+
+      if (res.ok) {
+        alert("Cambios guardados");
+      } else {
+        alert("Error al guardar cambios");
+      }
+    } catch (error) {
+      alert("Error de conexión");
+    }
+    setSavingEx(null);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -86,11 +161,18 @@ export default function StudentDetailView() {
             <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Este alumno aún no tiene una rutina activa asignada.</p>
           ) : (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                   <h2 style={{ margin: 0, color: 'var(--neon-pink)', fontSize: '1.25rem' }}>{routine.title}</h2>
                   <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{routine.weeks?.length} sem. Creado: {new Date(routine.start_date).toLocaleDateString()}</span>
                 </div>
+                <button 
+                  onClick={handleDeleteRoutine} 
+                  disabled={deletingRoutine}
+                  style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ef4444', padding: '0.5rem 1rem', borderRadius: '0.5rem', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
+                >
+                  {deletingRoutine ? 'Eliminando...' : 'Eliminar Rutina'}
+                </button>
               </div>
 
               {/* Week Selector */}
@@ -154,9 +236,14 @@ export default function StudentDetailView() {
 
                             return (
                               <div key={ex.id} style={{ width: '100%', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', padding: '1rem', marginTop: '0.5rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                                   <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
-                                  <button onClick={() => toggleExercise(ex.id)} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer' }}>Cerrar</button>
+                                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button onClick={() => handleSaveSets(ex.id, ex.id)} disabled={savingEx === ex.id} style={{ background: 'var(--neon-blue)', border: 'none', color: 'var(--background)', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                      {savingEx === ex.id ? 'Guardando...' : 'Guardar Cambios'}
+                                    </button>
+                                    <button onClick={() => toggleExercise(ex.id)} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--foreground-muted)', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Cerrar</button>
+                                  </div>
                                 </div>
                                 
                                 <div style={{ display: 'flex', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
@@ -176,14 +263,16 @@ export default function StudentDetailView() {
                                         {sIdx + 1}
                                       </div>
                                       <div style={{ flex: 2, paddingRight: '0.5rem' }}>
-                                        <input type="number" placeholder="kg" defaultValue={set.weight} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                        <input type="number" placeholder="kg" value={set.weight} onChange={e => handleSetChange(ex.id, set.id, 'weight', Number(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                                       </div>
                                       <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>
-                                        <input type="number" defaultValue={set.reps} style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'transparent', border: 'none', color: 'var(--foreground)', textAlign: 'center', fontWeight: 'bold' }} />
+                                        <input type="number" value={set.reps} onChange={e => handleSetChange(ex.id, set.id, 'reps', Number(e.target.value))} style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'transparent', border: 'none', color: 'var(--foreground)', textAlign: 'center', fontWeight: 'bold' }} />
                                       </div>
-                                      <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>{set.rpe}</div>
+                                      <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                                        <input type="number" value={set.rpe} onChange={e => handleSetChange(ex.id, set.id, 'rpe', Number(e.target.value))} style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'transparent', border: '1px dashed var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', fontWeight: 'bold' }} />
+                                      </div>
                                       <div style={{ flex: 1.5, textAlign: 'center' }}>
-                                        <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                        <input type="number" placeholder="rpe" disabled style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', opacity: 0.5, cursor: 'not-allowed' }} />
                                       </div>
                                       <div style={{ flex: 1, textAlign: 'center', fontSize: '0.875rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
                                       <div style={{ width: '2rem', textAlign: 'center' }}>
