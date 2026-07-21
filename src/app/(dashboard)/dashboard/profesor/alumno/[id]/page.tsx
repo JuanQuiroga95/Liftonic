@@ -18,6 +18,26 @@ export default function StudentDetailView() {
   const [deletingRoutine, setDeletingRoutine] = useState(false);
   const [savingEx, setSavingEx] = useState<string | null>(null);
 
+  // Anamnesis State
+  const [anamnesisHistory, setAnamnesisHistory] = useState<any[]>([]);
+  const [requestingAnamnesis, setRequestingAnamnesis] = useState(false);
+
+  const handleRequestAnamnesis = async () => {
+    if (!confirm("¿Solicitar que el alumno complete una nueva encuesta de anamnesis? Esto ocultará su rutina hasta que lo haga.")) return;
+    setRequestingAnamnesis(true);
+    try {
+      const res = await fetch(`/api/profesor/students/${id}/anamnesis/request`, { method: 'POST' });
+      if (res.ok) {
+        alert("Solicitud enviada exitosamente. El alumno verá el formulario en su próximo inicio de sesión.");
+      } else {
+        alert("Error al solicitar la encuesta");
+      }
+    } catch (e) {
+      alert("Error de conexión");
+    }
+    setRequestingAnamnesis(false);
+  };
+
   const handleDeleteRoutine = async () => {
     if (!confirm("¿Estás seguro que deseas eliminar esta rutina? Toda la información y progresos asociados se perderán.")) return;
     setDeletingRoutine(true);
@@ -105,7 +125,14 @@ export default function StudentDetailView() {
       .then(data => {
         if (!data.error) setRoutine(data);
       });
-  }, [params.id]);
+
+    // Fetch Anamnesis History
+    fetch(`/api/profesor/students/${id}/anamnesis`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error && Array.isArray(data)) setAnamnesisHistory(data);
+      });
+  }, [id, params.id]);
 
   const activeWeek = routine?.weeks?.[activeWeekIndex];
   
@@ -149,9 +176,10 @@ export default function StudentDetailView() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button style={{ background: 'transparent', color: activeTab === 'rutina' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'rutina' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'rutina' ? 'bold' : 'normal' }} onClick={() => setActiveTab('rutina')}>Rutina Activa</button>
-        <button style={{ background: 'transparent', color: activeTab === 'metricas' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'metricas' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'metricas' ? 'bold' : 'normal' }} onClick={() => setActiveTab('metricas')}>Métricas y RM</button>
+        <button style={{ background: 'transparent', color: activeTab === 'encuesta' ? 'var(--neon-pink)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'encuesta' ? '2px solid var(--neon-pink)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'encuesta' ? 'bold' : 'normal' }} onClick={() => setActiveTab('encuesta')}>Encuesta</button>
+        <button style={{ background: 'transparent', color: activeTab === 'metricas' ? 'var(--neon-green)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'metricas' ? '2px solid var(--neon-green)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'metricas' ? 'bold' : 'normal' }} onClick={() => setActiveTab('metricas')}>Métricas y RM</button>
       </div>
 
       {/* Routine Content */}
@@ -291,6 +319,76 @@ export default function StudentDetailView() {
                 </div>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'encuesta' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <h2 style={{ margin: 0, color: 'var(--neon-pink)', fontSize: '1.25rem' }}>Encuestas (Anamnesis)</h2>
+            <button 
+              onClick={handleRequestAnamnesis} 
+              disabled={requestingAnamnesis}
+              style={{ background: 'var(--neon-blue)', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', color: 'var(--background)', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              {requestingAnamnesis ? 'Solicitando...' : 'Solicitar Nueva Encuesta'}
+            </button>
+          </div>
+
+          {anamnesisHistory.length === 0 ? (
+            <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Este alumno aún no ha completado su encuesta inicial.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {anamnesisHistory.map((form, idx) => (
+                <div key={form.id} style={{ backgroundColor: 'var(--surface)', borderRadius: '1rem', border: `1px solid ${idx === 0 && form.is_active ? 'var(--neon-green)' : 'var(--border)'}`, padding: '1.5rem', opacity: form.is_active ? 1 : 0.7 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px dashed var(--border)', paddingBottom: '1rem' }}>
+                    <h3 style={{ margin: 0, color: 'var(--foreground)', fontSize: '1.1rem' }}>
+                      {new Date(form.created_at).toLocaleDateString()} {idx === 0 && form.is_active && <span style={{ fontSize: '0.75rem', backgroundColor: 'rgba(0, 255, 136, 0.2)', color: 'var(--neon-green)', padding: '0.25rem 0.5rem', borderRadius: '1rem', marginLeft: '0.5rem' }}>Activa</span>}
+                    </h3>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Objetivo</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.training_goal || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Frecuencia Semanal</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.weekly_frequency || '-'} días</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Experiencia</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.training_experience || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Peso y Altura</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.current_weight ? `${form.current_weight} kg` : '-'} / {form.height ? `${form.height} cm` : '-'}</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Lesiones / Condiciones</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.injuries_conditions || 'Ninguna'}</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Preferencia de División</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.split_preference || '-'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Intereses Musculares</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.muscle_interests || '-'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Preferencias de Ejercicios</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.exercise_preferences || '-'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Comentarios Adicionales</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.additional_comments || 'Ninguno'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
