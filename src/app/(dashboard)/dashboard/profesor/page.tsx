@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import RoutineBuilder from "./RoutineBuilder";
+import { useRouter } from "next/navigation";
 
 export default function ProfessorDashboard() {
   const [activeTab, setActiveTab] = useState("alumnos");
@@ -170,6 +171,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
 
   const handleOpenCreate = () => {
     setEditingId(null);
@@ -283,6 +285,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.name}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.username}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
+                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem', fontWeight: 'bold' }} onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
                   <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem' }} onClick={() => handleOpenEdit(s)}>Editar</button>
                   <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--neon-blue)', border: '1px solid var(--neon-blue)', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem' }} onClick={() => handleReset(s.id)}>Resetear Formulario</button>
                   <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '0.5rem', cursor: 'pointer' }} onClick={() => handleDelete(s.id)}>Eliminar</button>

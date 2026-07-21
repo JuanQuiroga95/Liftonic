@@ -130,7 +130,7 @@ function RoutineViewer() {
     fetch('/api/alumno/routine').then(r => r.json()).then(setRoutine);
   }, []);
 
-  if (!routine) return <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Tu profesor aún no te ha asignado una rutina.</p>;
+  if (!routine || routine.error) return <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Tu profesor aún no te ha asignado una rutina.</p>;
 
   const activeWeek = routine.weeks?.[activeWeekIndex];
   

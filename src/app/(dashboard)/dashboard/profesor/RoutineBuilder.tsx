@@ -439,6 +439,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                             <div style={{ width: '2rem', textAlign: 'center' }}>#</div>
                             <div style={{ flex: 1 }}>REPS</div>
                             <div style={{ flex: 1 }}>PROFESOR</div>
+                            <div style={{ flex: 1 }}>ASESORADO</div>
                             <div style={{ flex: 1 }}>KG Obj.</div>
                             <div style={{ flex: 1 }}>TIPO</div>
                             <div style={{ width: '2rem' }}></div>
@@ -454,6 +455,10 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                               
                               <div style={{ flex: 1 }}>
                                 <input type="number" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              </div>
+
+                              <div style={{ flex: 1 }}>
+                                <input type="text" disabled placeholder="-" style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px dashed var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', cursor: 'not-allowed' }} title="El alumno llenará esto" />
                               </div>
                               
                               <div style={{ flex: 1 }}>
