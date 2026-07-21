@@ -3,15 +3,15 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { query } from '@/lib/db';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id: studentId } = await params;
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'PROFESSOR') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const professorId = (session.user as any).id;
-    const studentId = params.id;
     
     // Get the most recent routine for this student by this professor
     const routineRes = await query(`

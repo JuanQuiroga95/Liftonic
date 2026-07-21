@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
-export default function StudentDetailView({ params }: { params: { id: string } }) {
+export default function StudentDetailView() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
   const [student, setStudent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("rutina");
   
@@ -14,15 +16,16 @@ export default function StudentDetailView({ params }: { params: { id: string } }
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    if (!id) return;
     // Fetch Student Info
-    fetch(`/api/profesor/students/${params.id}`)
+    fetch(`/api/profesor/students/${id}`)
       .then(r => r.json())
       .then(data => {
         if (!data.error) setStudent(data);
       });
 
     // Fetch Routine
-    fetch(`/api/profesor/students/${params.id}/routine`)
+    fetch(`/api/profesor/students/${id}/routine`)
       .then(r => r.json())
       .then(data => {
         if (!data.error) setRoutine(data);
