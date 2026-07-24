@@ -2,23 +2,23 @@
 
 :root {
   /* Default: Dark Theme */
-  --background: #050505;
-  --surface: #121212;
+  --background: #7124c8; /* Strong purple background */
+  --surface: #111111; /* Dark cards */
   --surface-hover: #1e1e1e;
-  --foreground: #f4f4f5;
-  --foreground-muted: #a1a1aa;
+  --foreground: #ffffff;
+  --foreground-muted: #e2e8f0;
   
   /* Neon Accents */
-  --neon-fuchsia: #ff00ff;
-  --neon-pink: #ff1493;
-  --neon-blue: #00e5ff;
+  --neon-fuchsia: #8a2be2;
+  --neon-pink: #a855f7;
+  --neon-blue: #c084fc;
   
   /* Borders & Dividers */
   --border: #27272a;
   
   /* Shadows */
-  --shadow-neon-pink: 0 0 10px rgba(255, 20, 147, 0.5);
-  --shadow-neon-blue: 0 0 10px rgba(0, 229, 255, 0.5);
+  --shadow-neon-pink: 0 0 10px rgba(168, 85, 247, 0.5);
+  --shadow-neon-blue: 0 0 10px rgba(192, 132, 252, 0.5);
 }
 
 [data-theme="light"] {
@@ -50,6 +50,8 @@ body {
 
 body {
   background-color: var(--background);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;

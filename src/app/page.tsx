@@ -14,7 +14,7 @@ export default function Home() {
           LIFTONIC
         </h1>
         <p className={styles.subtitle}>
-          La evolución de tu entrenamiento. Gestión integral, tracking inteligente y una experiencia premium para vos y tus alumnos.
+          Hola! Somos Estefi y Juli, bienvenida/o al equipo Liftonic, vamos con todo en este nuevo desafío🤗
         </p>
 
         <div className={styles.actions}>
