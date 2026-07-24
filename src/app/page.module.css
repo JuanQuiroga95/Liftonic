@@ -57,11 +57,8 @@
   font-weight: 900;
   letter-spacing: -0.05em;
   margin-bottom: 1rem;
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
-  background-image: linear-gradient(to right, var(--neon-pink), var(--neon-blue));
-  filter: drop-shadow(0 0 10px rgba(255, 20, 147, 0.5));
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 @media (min-width: 640px) {
@@ -72,7 +69,7 @@
 
 .subtitle {
   font-size: 1.25rem;
-  color: var(--foreground-muted);
+  color: #ffffff;
   max-width: 42rem;
   font-weight: 300;
 }
@@ -102,21 +99,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--neon-fuchsia);
-  color: var(--background);
+  background-color: #111111;
+  color: #ffffff;
   gap: 0.5rem;
   font-size: 0.875rem;
   height: 3rem;
   padding: 0 2rem;
   font-weight: 700;
-  box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
-  border: 1px solid transparent;
+  border: 2px solid var(--neon-fuchsia);
 }
 
 .btnPrimary:hover {
-  background-color: #ff4dff;
-  box-shadow: 0 0 30px rgba(255, 0, 255, 0.6);
+  background-color: var(--neon-fuchsia);
+  color: #ffffff;
 }
 
 @media (min-width: 640px) {
@@ -128,19 +125,23 @@
 
 .btnSecondary {
   border-radius: 9999px;
-  border: 2px solid var(--border);
+  background-color: #ffffff;
+  color: #111111;
+  border: 2px solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
   font-size: 0.875rem;
   height: 3rem;
   padding: 0 2rem;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .btnSecondary:hover {
-  background-color: var(--surface-hover);
-  border-color: var(--neon-blue);
+  background-color: #f3f4f6;
+  border-color: #f3f4f6;
 }
 
 @media (min-width: 640px) {
