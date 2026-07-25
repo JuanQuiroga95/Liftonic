@@ -191,7 +191,7 @@ function RoutineViewer() {
 
   return (
     <div style={{ paddingBottom: '4rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="mobile-wrap" style={{ justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div>
           <h2 style={{ margin: 0, color: 'var(--foreground)', fontSize: '1.5rem' }}>{routine.title}</h2>
           <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{routine.weeks?.length} sem. Creado: {new Date(routine.start_date).toLocaleDateString()}</span>
@@ -279,40 +279,34 @@ function RoutineViewer() {
                             <button className="btn-ghost" onClick={() => toggleExercise(ex.id)}>Cerrar</button>
                         </div>
                         
-                        <div className="table-responsive">
-                          <div className="table-responsive-inner" style={{ paddingBottom: '0.5rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          <div style={{ textAlign: 'center' }}>#</div>
-                          <div style={{ textAlign: 'center' }}>Peso (kg)</div>
-                          <div style={{ textAlign: 'center' }}>Reps</div>
-                          <div style={{ textAlign: 'center' }} title="RPE Prescrito por el Profesor">Prof.</div>
-                          <div style={{ textAlign: 'center' }} title="RPE Percibido por el Alumno">Tu RPE</div>
-                          <div style={{ textAlign: 'center' }}>Tipo</div>
-                          <div style={{ textAlign: 'center' }}>✓</div>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div style={{ paddingBottom: '0.5rem' }}>
+                          <div className="routine-grid-header" style={{ color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>
+                            <div style={{ textAlign: 'center' }}>#</div>
+                            <div style={{ textAlign: 'center' }}>Peso (kg)</div>
+                            <div style={{ textAlign: 'center' }}>Reps</div>
+                            <div style={{ textAlign: 'center' }} title="RPE Prescrito por el Profesor">Prof.</div>
+                            <div style={{ textAlign: 'center' }} title="RPE Percibido por el Alumno">Tu RPE</div>
+                            <div style={{ textAlign: 'center' }}>Tipo</div>
+                            <div style={{ textAlign: 'center' }}>✓</div>
+                          </div>
+                          
                           {ex.sets?.map((set: any, sIdx: number) => (
-                            <div key={set.id} style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', padding: '0.5rem', border: '1px solid var(--border)', transition: 'background-color 0.2s' }}>
-                              <div style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                                {sIdx + 1}
-                              </div>
-                              <div style={{ textAlign: 'center' }}>
+                            <div key={set.id} className="routine-grid-row" style={{ backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', transition: 'background-color 0.2s', marginBottom: '0.5rem' }}>
+                              <div style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem', fontWeight: 'bold' }}>{sIdx + 1}</div>
+                              <div>
                                 <input type="number" placeholder="kg" defaultValue={set.weight} style={{ width: '100%', maxWidth: '80px', padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
                               </div>
                               <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '0.9rem' }}>{set.reps}</div>
                               <div style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)', fontSize: '0.9rem' }}>{set.rpe}</div>
-                              <div style={{ textAlign: 'center' }}>
+                              <div>
                                 <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
                               </div>
                               <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '600', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
-                              <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+                              <div style={{ display: 'flex', justifyContent: 'center' }}>
                                 <input type="checkbox" style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer', accentColor: color.border, borderRadius: '0.25rem' }} />
                               </div>
                             </div>
                           ))}
-                            </div>
-                          </div>
                         </div>
                       </div>
                     );

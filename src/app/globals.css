@@ -146,13 +146,46 @@ a {
 }
 
 /* --- RESPONSIVE UTILITIES --- */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+.mobile-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.table-responsive-inner {
-  min-width: 700px;
+.routine-grid-header {
+  display: grid;
+  grid-template-columns: 40px 1.5fr 1fr 1fr 1.5fr 1fr 40px;
+  gap: 0.5rem;
+}
+
+.routine-grid-row {
+  display: grid;
+  grid-template-columns: 40px 1.5fr 1fr 1fr 1.5fr 1fr 40px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .routine-grid-header {
+    display: none;
+  }
+  .routine-grid-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 1rem !important;
+    gap: 1rem 0.5rem;
+  }
+  .routine-grid-row > div:first-child {
+    grid-column: 1 / -1;
+    text-align: left !important;
+    font-size: 1.1rem !important;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 0.5rem;
+    width: 100%;
+  }
+  .routine-grid-row > div:last-child {
+    grid-column: 1 / -1;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border);
+    width: 100%;
+  }
 }

@@ -434,56 +434,47 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                         />
 
                         {/* Tabla de Series */}
-                        <div className="table-responsive" style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
-                          <div className="table-responsive-inner">
-                            <div style={{ display: 'flex', padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
-                            <div style={{ width: '2rem', textAlign: 'center' }}>#</div>
-                            <div style={{ flex: 1 }}>REPS</div>
-                            <div style={{ flex: 1 }}>PROFESOR</div>
-                            <div style={{ flex: 1 }}>ASESORADO</div>
-                            <div style={{ flex: 1 }}>KG Obj.</div>
-                            <div style={{ flex: 1 }}>TIPO</div>
-                            <div style={{ width: '2rem' }}></div>
+                        <div style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                          <div className="routine-grid-header" style={{ padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                            <div style={{ textAlign: 'center' }}>#</div>
+                            <div style={{ textAlign: 'center' }}>REPS</div>
+                            <div style={{ textAlign: 'center' }}>PROF. RPE</div>
+                            <div style={{ textAlign: 'center' }}>ALU. RPE</div>
+                            <div style={{ textAlign: 'center' }}>KG Obj.</div>
+                            <div style={{ textAlign: 'center' }}>TIPO</div>
+                            <div style={{ textAlign: 'center' }}></div>
                           </div>
                           
                           {ex.sets?.map((set: any, sIndex: number) => (
-                            <div key={set.id} style={{ display: 'flex', padding: '0.5rem', borderTop: '1px solid var(--border)', alignItems: 'center', gap: '0.5rem' }}>
-                              <div style={{ width: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--foreground-muted)' }}>{sIndex + 1}</div>
-                              
-                              <div style={{ flex: 1 }}>
-                                <input type="number" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', parseInt(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                            <div key={set.id} className="routine-grid-row" style={{ borderTop: '1px solid var(--border)' }}>
+                              <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--foreground-muted)', fontWeight: 'bold' }}>{sIndex + 1}</div>
+                              <div>
+                                <input type="number" placeholder="reps" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', parseInt(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
-                              
-                              <div style={{ flex: 1 }}>
-                                <input type="number" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              <div>
+                                <input type="number" placeholder="rpe" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
-
-                              <div style={{ flex: 1 }}>
+                              <div>
                                 <input type="text" disabled placeholder="-" style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px dashed var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', cursor: 'not-allowed' }} title="El alumno llenará esto" />
                               </div>
-                              
-                              <div style={{ flex: 1 }}>
-                                <input type="number" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              <div>
+                                <input type="number" placeholder="kg" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
-                              
-                              <div style={{ flex: 1 }}>
+                              <div>
                                 <select value={set.type} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'type', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>
                                   <option value="Normal">Normal</option>
                                   <option value="Top" style={{ color: 'var(--neon-pink)' }}>Top</option>
                                   <option value="Back" style={{ color: '#f59e0b' }}>Back</option>
                                 </select>
                               </div>
-
-                              <div style={{ width: '2rem', textAlign: 'center' }}>
+                              <div style={{ textAlign: 'center' }}>
                                 <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>×</button>
                               </div>
                             </div>
                           ))}
-                          
-                          <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0 }}>
+                          <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0, padding: '0.75rem' }}>
                             + Añadir Serie
                           </button>
-                          </div>
                         </div>
                       </div>
                     ))}

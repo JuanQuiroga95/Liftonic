@@ -46,10 +46,10 @@ export default function ProfessorDashboard() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '2rem' }}>
+      <header className="mobile-wrap" style={{ justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ color: 'var(--foreground)', fontSize: '2rem', margin: '0 0 1rem 0' }}>Panel de Profesor</h1>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div className="mobile-wrap" style={{ gap: '1rem' }}>
             <button style={{ background: 'transparent', color: activeTab === 'alumnos' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'alumnos' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'alumnos' ? 'bold' : 'normal' }} onClick={() => setActiveTab('alumnos')}>Mis Alumnos</button>
             <button style={{ background: 'transparent', color: activeTab === 'rutinas' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'rutinas' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'rutinas' ? 'bold' : 'normal' }} onClick={() => setActiveTab('rutinas')}>Constructor de Rutinas</button>
             <button style={{ background: 'transparent', color: activeTab === 'ejercicios' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'ejercicios' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'ejercicios' ? 'bold' : 'normal' }} onClick={() => setActiveTab('ejercicios')}>Biblioteca Ejercicios</button>
@@ -268,36 +268,25 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
         </div>
       )}
 
-      <div className="table-responsive">
-        <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--foreground-muted)', textTransform: 'uppercase', fontSize: '0.875rem' }}>Nombre</th>
-            <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--foreground-muted)', textTransform: 'uppercase', fontSize: '0.875rem' }}>Usuario</th>
-            <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--foreground-muted)', textTransform: 'uppercase', fontSize: '0.875rem' }}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.length === 0 ? (
-            <tr><td colSpan={3} style={{ padding: '2rem', textAlign: 'center', color: 'var(--foreground-muted)' }}>No tienes alumnos aún.</td></tr>
-          ) : (
-            students.map(s => (
-              <tr key={s.id}>
-                <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.name}</td>
-                <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.username}</td>
-                <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <button className="btn-primary" onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
-                    <button className="btn-ghost" onClick={() => handleOpenEdit(s)}>Editar</button>
-                    <button className="btn-outline-blue" onClick={() => handleReset(s.id)}>Resetear Formulario</button>
-                    <button className="btn-danger" onClick={() => handleDelete(s.id)}>Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+        {students.length === 0 ? (
+          <p style={{ color: 'var(--foreground-muted)', textAlign: 'center', gridColumn: '1 / -1' }}>No tienes alumnos aún.</p>
+        ) : (
+          students.map(s => (
+            <div key={s.id} style={{ backgroundColor: 'var(--surface)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--foreground)' }}>{s.name}</div>
+                <div style={{ color: 'var(--foreground-muted)' }}>@{s.username}</div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 'auto' }}>
+                <button className="btn-primary" onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
+                <button className="btn-ghost" onClick={() => handleOpenEdit(s)}>Editar</button>
+                <button className="btn-outline-blue" onClick={() => handleReset(s.id)}>Reset Form</button>
+                <button className="btn-danger" onClick={() => handleDelete(s.id)}>Eliminar</button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
