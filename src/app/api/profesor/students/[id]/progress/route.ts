@@ -3,14 +3,15 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { query } from '@/lib/db';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, context: any) {
   try {
+    const params = await context.params;
+    const studentId = params?.id || context.params.id;
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'PROFESSOR') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const studentId = params.id;
     const professorId = (session.user as any).id;
 
     // Verificar que el alumno pertenece a este profesor
