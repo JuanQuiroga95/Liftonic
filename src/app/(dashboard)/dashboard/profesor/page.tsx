@@ -313,20 +313,20 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       let finalMediaType = mediaType;
 
       if (mediaType === "UPLOAD" && file) {
-        // Configuraciones de Cloudinary
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "demo"; 
-        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "unsigned_preset"; 
-
-        if (cloudName === "demo" || uploadPreset === "unsigned_preset") {
-           alert("Por favor, configura tus credenciales de Cloudinary en el archivo .env o en el código.");
-        }
-
+        // Pedir la firma de seguridad a nuestro servidor (evita exponer el API Secret en el frontend)
+        const signRes = await fetch('/api/profesor/cloudinary-sign', { method: 'POST' });
+        if (!signRes.ok) throw new Error("No se pudo iniciar la subida segura. Verifica las variables de entorno.");
+        
+        const signData = await signRes.json();
+        
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("upload_preset", uploadPreset);
+        formData.append("api_key", signData.apiKey);
+        formData.append("timestamp", signData.timestamp.toString());
+        formData.append("signature", signData.signature);
 
-        // Subida directa
-        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+        // Subida directa a Cloudinary (saltando el límite de Vercel)
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
           method: "POST",
           body: formData,
         });
