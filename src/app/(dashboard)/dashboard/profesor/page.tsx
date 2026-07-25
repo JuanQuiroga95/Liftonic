@@ -294,6 +294,11 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
             ))
           )}
         </tbody>
+      </table>
+    </div>
+  );
+}
+
 function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: () => void }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
