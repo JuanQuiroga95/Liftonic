@@ -278,12 +278,12 @@ function RoutineViewer() {
                                 {sIdx + 1}
                               </div>
                               <div style={{ textAlign: 'center' }}>
-                                <input type="number" placeholder="kg" defaultValue={set.weight} style={{ width: '100%', maxWidth: '80px', padding: '0.4rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
+                                <input type="number" placeholder="kg" defaultValue={set.weight} style={{ width: '100%', maxWidth: '80px', padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
                               </div>
                               <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '0.9rem' }}>{set.reps}</div>
                               <div style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)', fontSize: '0.9rem' }}>{set.rpe}</div>
                               <div style={{ textAlign: 'center' }}>
-                                <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
+                                <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
                               </div>
                               <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '600', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
                               <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
