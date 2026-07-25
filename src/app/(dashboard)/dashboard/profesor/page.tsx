@@ -156,7 +156,7 @@ function ProfessorProfile({ profile, onReload }: { profile: any, onReload: () =>
           <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         </div>
 
-        <button type="submit" disabled={saving} style={{ padding: '0.75rem', backgroundColor: 'var(--neon-blue)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' }}>
+        <button type="submit" disabled={saving} style={{ padding: '0.75rem', backgroundColor: 'var(--neon-blue)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' }}>
           {saving ? 'Guardando cambios...' : 'Guardar Perfil'}
         </button>
       </form>
@@ -241,7 +241,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
           <h2 style={{ color: 'var(--foreground)' }}>Mis Alumnos</h2>
           <p style={{ color: 'var(--foreground-muted)' }}>Gestiona a tus alumnos y su historial.</p>
         </div>
-        <button onClick={handleOpenCreate} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>+ Nuevo Alumno</button>
+        <button onClick={handleOpenCreate} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>+ Nuevo Alumno</button>
       </div>
 
       {showModal && (
@@ -262,7 +262,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.75rem 1rem', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer' }}>Cancelar</button>
-              <button type="submit" disabled={saving} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-blue)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{saving ? 'Guardando...' : 'Guardar'}</button>
+              <button type="submit" disabled={saving} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-blue)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{saving ? 'Guardando...' : 'Guardar'}</button>
             </div>
           </form>
         </div>
@@ -349,24 +349,24 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
     <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
       <h2>Biblioteca de Ejercicios</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', marginBottom: '2rem' }}>
-        <input placeholder="Nombre del Ejercicio" value={name} onChange={e => setName(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
-        <input placeholder="Variación (Opcional, ej: Inclinado, Mancuernas)" value={variation} onChange={e => setVariation(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
-        <textarea placeholder="Descripción / Notas (Opcional)" value={description} onChange={e => setDescription(e.target.value)} rows={3} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+        <input placeholder="Nombre del Ejercicio" value={name} onChange={e => setName(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+        <input placeholder="Variación (Opcional, ej: Inclinado, Mancuernas)" value={variation} onChange={e => setVariation(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+        <textarea placeholder="Descripción / Notas (Opcional)" value={description} onChange={e => setDescription(e.target.value)} rows={3} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         
-        <select value={mediaType} onChange={e => setMediaType(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }}>
+        <select value={mediaType} onChange={e => setMediaType(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }}>
           <option value="NONE">Sin Multimedia (Solo texto)</option>
           <option value="LINK">Link de YouTube/Insta</option>
           <option value="UPLOAD">Subir Archivo (Cloudinary)</option>
         </select>
         
         {mediaType === "LINK" && (
-          <input placeholder="URL del video" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+          <input placeholder="URL del video" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         )}
         {mediaType === "UPLOAD" && (
-          <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} required style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+          <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} required style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         )}
         
-        <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{loading ? 'Guardando...' : 'Crear Ejercicio'}</button>
+        <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{loading ? 'Guardando...' : 'Crear Ejercicio'}</button>
       </form>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>

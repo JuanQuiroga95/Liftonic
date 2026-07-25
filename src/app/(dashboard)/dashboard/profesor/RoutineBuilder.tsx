@@ -111,12 +111,12 @@ function ExerciseAutocomplete({
     return (
       <div style={{ padding: '1rem', backgroundColor: 'var(--surface-hover)', borderRadius: '0.5rem', border: '1px solid var(--border)', marginBottom: '0.5rem' }}>
         <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: 'var(--neon-blue)' }}>Crear Nuevo Ejercicio</h4>
-        <input placeholder="Nombre" value={newName} onChange={e => setNewName(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }} />
-        <input placeholder="Variación (Opcional)" value={newVar} onChange={e => setNewVar(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }} />
-        <textarea placeholder="Descripción (Opcional)" value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={2} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--background)', color: 'var(--foreground)' }} />
+        <input placeholder="Nombre" value={newName} onChange={e => setNewName(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--surface-hover)', color: 'var(--foreground)' }} />
+        <input placeholder="Variación (Opcional)" value={newVar} onChange={e => setNewVar(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--surface-hover)', color: 'var(--foreground)' }} />
+        <textarea placeholder="Descripción (Opcional)" value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={2} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--surface-hover)', color: 'var(--foreground)' }} />
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button onClick={() => setIsCreating(false)} style={{ flex: 1, padding: '0.5rem', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={handleCreate} disabled={saving} style={{ flex: 1, padding: '0.5rem', background: 'var(--neon-blue)', color: 'var(--background)', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold' }}>{saving ? 'Guardando...' : 'Crear y Usar'}</button>
+          <button onClick={handleCreate} disabled={saving} style={{ flex: 1, padding: '0.5rem', background: 'var(--neon-blue)', color: '#ffffff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold' }}>{saving ? 'Guardando...' : 'Crear y Usar'}</button>
         </div>
       </div>
     );
@@ -499,7 +499,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button onClick={addWeek} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer' }}>+ Agregar Semana</button>
-        <button onClick={handleSave} disabled={saving} style={{ padding: '0.75rem 2rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}>
+        <button onClick={handleSave} disabled={saving} style={{ padding: '0.75rem 2rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}>
           {saving ? 'Guardando Rutina...' : 'Guardar y Asignar Rutina'}
         </button>
       </div>
