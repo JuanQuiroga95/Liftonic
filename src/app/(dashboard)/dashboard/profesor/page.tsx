@@ -294,55 +294,66 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
             ))
           )}
         </tbody>
-      </table>
-    </div>
-  );
-}
-
 function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: () => void }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [variation, setVariation] = useState("");
-  const [mediaType, setMediaType] = useState("LINK");
+  const [mediaType, setMediaType] = useState("NONE");
   const [mediaUrl, setMediaUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    let finalUrl = mediaUrl;
+    try {
+      let finalMediaUrl = mediaUrl;
+      let finalMediaType = mediaType;
 
-    if (mediaType === "UPLOAD" && file) {
-      try {
-        const response = await fetch(`/api/profesor/upload?filename=${file.name}`, { method: "POST", body: file });
-        const data = await response.json();
-        if (data.url) finalUrl = data.url;
-        else alert("Error subiendo el archivo: " + data.error);
-      } catch (err) {
-        alert("Error de subida");
+      if (mediaType === "UPLOAD" && file) {
+        // Configuraciones de Cloudinary
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "demo"; 
+        const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "unsigned_preset"; 
+
+        if (cloudName === "demo" || uploadPreset === "unsigned_preset") {
+           alert("Por favor, configura tus credenciales de Cloudinary en el archivo .env o en el código.");
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
+
+        // Subida directa
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) throw new Error("Error al subir a Cloudinary");
+        
+        const uploadData = await uploadRes.json();
+        finalMediaUrl = uploadData.secure_url;
+        finalMediaType = "LINK"; // Para BD se guarda como URL externa
       }
-    }
 
-    if (!finalUrl && mediaType !== "NONE") {
+      const mediaPayload = (finalMediaType === "LINK" && finalMediaUrl) ? [{ type: 'LINK', url: finalMediaUrl }] : [];
+
+      await fetch('/api/profesor/exercises', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description, variation, media: mediaPayload }),
+      });
+
+      setName(""); setDescription(""); setVariation(""); setMediaUrl(""); setFile(null);
+      onReload();
+    } catch (error) {
+      alert("Ocurrió un error al guardar el ejercicio.");
+      console.error(error);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    await fetch('/api/profesor/exercises', {
-      method: "POST",
-      body: JSON.stringify({ 
-        name, 
-        description, 
-        variation, 
-        media: finalUrl ? [{ type: mediaType, url: finalUrl }] : [] 
-      })
-    });
-
-    setName(""); setDescription(""); setVariation(""); setMediaUrl(""); setFile(null);
-    onReload();
-    setLoading(false);
   };
 
   return (
@@ -356,6 +367,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         <select value={mediaType} onChange={e => setMediaType(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }}>
           <option value="NONE">Sin Video (Solo texto)</option>
           <option value="LINK">Enlace a Video (YouTube / Instagram)</option>
+          <option value="UPLOAD">Subir Archivo (Video o Foto desde galería)</option>
         </select>
         
         {mediaType === "LINK" && (
@@ -364,8 +376,16 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Copiá y pegá el link de YouTube. El alumno lo podrá reproducir directamente en la app.</p>
           </div>
         )}
+        {mediaType === "UPLOAD" && (
+          <div>
+            <input type="file" accept="video/*,image/*" onChange={e => setFile(e.target.files?.[0] || null)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Sube un video o foto directamente desde tu dispositivo.</p>
+          </div>
+        )}
         
-        <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{loading ? 'Guardando...' : 'Crear Ejercicio'}</button>
+        <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
+          {loading ? 'Subiendo y Guardando...' : 'Crear Ejercicio'}
+        </button>
       </form>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>

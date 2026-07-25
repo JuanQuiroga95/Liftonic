@@ -331,13 +331,27 @@ function RoutineViewer() {
             
             <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
               {infoModal.media && infoModal.media[0]?.url ? (
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, marginBottom: '1.5rem', backgroundColor: '#000', borderRadius: '0.5rem', overflow: 'hidden' }}>
-                  <iframe 
-                    src={getEmbedUrl(infoModal.media[0].url)} 
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
-                    allowFullScreen
-                    title={infoModal.exercise_name}
-                  ></iframe>
+                <div style={{ marginBottom: '1.5rem', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: '#000', display: 'flex', justifyContent: 'center' }}>
+                  {(() => {
+                    const url = infoModal.media[0].url;
+                    const isVideo = url.match(/\.(mp4|webm|mov|ogg)$/i) || url.includes("cloudinary") && !url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                    const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+                    const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
+
+                    if (isYouTube) {
+                      return (
+                        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, width: '100%' }}>
+                          <iframe src={getEmbedUrl(url)} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} allowFullScreen title={infoModal.exercise_name}></iframe>
+                        </div>
+                      );
+                    } else if (isImage) {
+                      return <img src={url} alt={infoModal.exercise_name} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} />;
+                    } else if (isVideo || url.includes("cloudinary")) {
+                      return <video src={url} controls style={{ maxWidth: '100%', maxHeight: '400px' }}></video>;
+                    } else {
+                      return <a href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-blue)', padding: '2rem', display: 'block' }}>Abrir enlace multimedia</a>;
+                    }
+                  })()}
                 </div>
               ) : (
                 <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--surface-hover)', borderRadius: '0.5rem', marginBottom: '1.5rem', border: '1px dashed var(--border)' }}>
