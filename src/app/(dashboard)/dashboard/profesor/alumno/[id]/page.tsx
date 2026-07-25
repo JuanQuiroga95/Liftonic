@@ -293,37 +293,37 @@ export default function StudentDetailView() {
                                   </div>
                                 </div>
                                 
-                                <div style={{ display: 'flex', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem' }}>
-                                  <div style={{ width: '2rem' }}>#</div>
-                                  <div style={{ flex: 2 }}>KG</div>
-                                  <div style={{ flex: 1, textAlign: 'center' }}>REPS</div>
-                                  <div style={{ flex: 1, textAlign: 'center' }}>PROF.</div>
-                                  <div style={{ flex: 1.5, textAlign: 'center' }}>ASESORADO</div>
-                                  <div style={{ flex: 1, textAlign: 'center' }}>TIPO</div>
-                                  <div style={{ width: '2rem', textAlign: 'center' }}>✓</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  <div style={{ textAlign: 'center' }}>#</div>
+                                  <div style={{ textAlign: 'center' }}>Peso (kg)</div>
+                                  <div style={{ textAlign: 'center' }}>Reps</div>
+                                  <div style={{ textAlign: 'center' }} title="RPE Prescrito">Prof.</div>
+                                  <div style={{ textAlign: 'center' }} title="RPE Percibido">Tu RPE</div>
+                                  <div style={{ textAlign: 'center' }}>Tipo</div>
+                                  <div style={{ textAlign: 'center' }}>✓</div>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                   {ex.sets?.map((set: any, sIdx: number) => (
-                                    <div key={set.id} style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--background)', borderRadius: '0.5rem', padding: '0.5rem', border: '1px solid var(--surface-hover)' }}>
-                                      <div style={{ width: '2rem', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>
+                                    <div key={set.id} style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', padding: '0.5rem', border: '1px solid var(--border)', transition: 'background-color 0.2s' }}>
+                                      <div style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem', fontWeight: 'bold' }}>
                                         {sIdx + 1}
                                       </div>
-                                      <div style={{ flex: 2, paddingRight: '0.5rem' }}>
-                                        <input type="number" placeholder="kg" value={set.weight} onChange={e => handleSetChange(ex.id, set.id, 'weight', Number(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                      <div style={{ textAlign: 'center' }}>
+                                        <input type="number" placeholder="kg" value={set.weight || ''} onChange={e => handleSetChange(ex.id, set.id, 'weight', Number(e.target.value))} style={{ width: '100%', maxWidth: '80px', padding: '0.4rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
                                       </div>
-                                      <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>
-                                        <input type="number" value={set.reps} onChange={e => handleSetChange(ex.id, set.id, 'reps', Number(e.target.value))} style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'transparent', border: 'none', color: 'var(--foreground)', textAlign: 'center', fontWeight: 'bold' }} />
+                                      <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                                        <input type="number" value={set.reps || ''} onChange={e => handleSetChange(ex.id, set.id, 'reps', Number(e.target.value))} style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem', fontWeight: 'bold' }} />
                                       </div>
-                                      <div style={{ flex: 1, textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
-                                        <input type="number" value={set.rpe} onChange={e => handleSetChange(ex.id, set.id, 'rpe', Number(e.target.value))} style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'transparent', border: '1px dashed var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', fontWeight: 'bold' }} />
+                                      <div style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                                        <input type="number" value={set.rpe || ''} onChange={e => handleSetChange(ex.id, set.id, 'rpe', Number(e.target.value))} style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'var(--background)', border: '1px dashed var(--surface-hover)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem', fontWeight: 'bold' }} />
                                       </div>
-                                      <div style={{ flex: 1.5, textAlign: 'center' }}>
-                                        <input type="number" placeholder="rpe" disabled style={{ width: '100%', maxWidth: '50px', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', opacity: 0.5, cursor: 'not-allowed' }} />
+                                      <div style={{ textAlign: 'center' }}>
+                                        <input type="number" placeholder="rpe" disabled style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'var(--surface)', border: '1px solid var(--surface-hover)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', fontSize: '0.875rem', opacity: 0.5, cursor: 'not-allowed' }} />
                                       </div>
-                                      <div style={{ flex: 1, textAlign: 'center', fontSize: '0.875rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
-                                      <div style={{ width: '2rem', textAlign: 'center' }}>
-                                        <input type="checkbox" style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer', accentColor: color.border }} />
+                                      <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '600', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
+                                      <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+                                        <input type="checkbox" style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer', accentColor: color.border, borderRadius: '0.25rem' }} />
                                       </div>
                                     </div>
                                   ))}
