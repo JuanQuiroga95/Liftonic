@@ -189,3 +189,14 @@ a {
     width: 100%;
   }
 }
+
+/* Utils */
+.pad-main { padding: 2rem; }
+.pad-card { padding: 2rem; }
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+@media (max-width: 768px) {
+  .pad-main { padding: 0.75rem; }
+  .pad-card { padding: 1rem; }
+  .profile-grid { grid-template-columns: 1fr; }
+}

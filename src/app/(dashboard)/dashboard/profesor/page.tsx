@@ -45,7 +45,7 @@ export default function ProfessorDashboard() {
   }, []);
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="pad-main" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       <header className="mobile-wrap" style={{ justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ color: 'var(--foreground)', fontSize: '2rem', margin: '0 0 1rem 0' }}>Panel de Profesor</h1>
@@ -131,7 +131,7 @@ function ProfessorProfile({ profile, onReload }: { profile: any, onReload: () =>
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', maxWidth: '600px', margin: '0 auto' }}>
+    <div className="pad-card" style={{ backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', maxWidth: '600px', margin: '0 auto' }}>
       <h2 style={{ color: 'var(--foreground)', marginBottom: '1.5rem' }}>Configuración de Perfil</h2>
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         

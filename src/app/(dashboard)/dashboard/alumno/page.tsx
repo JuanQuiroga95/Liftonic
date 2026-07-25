@@ -115,7 +115,7 @@ export default function AlumnoDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, padding: '2rem', maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
+      <div className="pad-main" style={{ flex: 1, maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
         
         {/* Header con Saludo */}
         {profile && (
@@ -129,7 +129,7 @@ export default function AlumnoDashboard() {
           </div>
         )}
 
-        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
+        <div className="pad-card" style={{ backgroundColor: 'var(--surface-hover)', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
           {renderTabContent()}
         </div>
       </div>
@@ -605,7 +605,7 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
         <h2 style={{ color: 'var(--neon-fuchsia)', margin: 0, fontSize: '1.5rem' }}>Mi Perfil de Entrenamiento</h2>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div className="profile-grid">
         <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
           <h3 style={{ fontSize: '1.1rem', color: 'var(--neon-blue)', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Datos Físicos</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -630,7 +630,7 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
 
         <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
           <h3 style={{ fontSize: '1.1rem', color: '#f59e0b', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Historial y Observaciones</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="profile-grid">
             <div>
               <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Experiencia previa:</span>
               <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.training_experience || 'Sin datos'}</p>

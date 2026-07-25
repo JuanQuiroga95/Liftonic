@@ -174,7 +174,7 @@ export default function StudentDetailView() {
   if (!student) return <div style={{ padding: '2rem', color: 'var(--foreground)' }}>Cargando perfil...</div>;
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
+    <div className="pad-main" style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
       
       {/* Header */}
       <div className="mobile-wrap" style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
