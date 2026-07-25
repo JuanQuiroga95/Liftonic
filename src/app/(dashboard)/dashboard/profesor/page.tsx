@@ -300,6 +300,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
 }
 
 function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: () => void }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [variation, setVariation] = useState("");
@@ -308,6 +309,43 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleEdit = (ex: any) => {
+    setEditingId(ex.id);
+    setName(ex.name);
+    setDescription(ex.description || "");
+    setVariation(ex.variation || "");
+    
+    if (ex.media && ex.media[0] && ex.media[0].url) {
+      setMediaType(ex.media[0].type || "LINK");
+      setMediaUrl(ex.media[0].url);
+    } else {
+      setMediaType("NONE");
+      setMediaUrl("");
+    }
+    setFile(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este ejercicio?")) return;
+    try {
+      const res = await fetch(`/api/profesor/exercises/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorData = await res.json();
+        alert(errorData.error || "Error al borrar");
+        return;
+      }
+      onReload();
+    } catch (e) {
+      alert("Error de conexión");
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setName(""); setDescription(""); setVariation(""); setMediaUrl(""); setFile(null); setMediaType("NONE");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -345,13 +383,21 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
 
       const mediaPayload = (finalMediaType === "LINK" && finalMediaUrl) ? [{ type: 'LINK', url: finalMediaUrl }] : [];
 
-      await fetch('/api/profesor/exercises', {
-        method: 'POST',
+      const url = editingId ? `/api/profesor/exercises/${editingId}` : '/api/profesor/exercises';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description, variation, media: mediaPayload }),
       });
 
-      setName(""); setDescription(""); setVariation(""); setMediaUrl(""); setFile(null);
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Error al guardar");
+      }
+
+      cancelEdit();
       onReload();
     } catch (error) {
       alert("Ocurrió un error al guardar el ejercicio.");
@@ -388,9 +434,16 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
           </div>
         )}
         
-        <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? 'Subiendo y Guardando...' : 'Crear Ejercicio'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button type="submit" disabled={loading} style={{ flex: 1, padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
+            {loading ? 'Guardando...' : (editingId ? 'Actualizar Ejercicio' : 'Crear Ejercicio')}
+          </button>
+          {editingId && (
+            <button type="button" onClick={cancelEdit} disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: loading ? 'not-allowed' : 'pointer' }}>
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
@@ -399,8 +452,12 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{e.name} {e.variation && <span style={{color: 'var(--neon-blue)', fontSize: '0.875rem'}}>({e.variation})</span>}</h3>
             {e.description && <p style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)', marginBottom: '0.5rem' }}>{e.description}</p>}
             {e.media && e.media[0] && e.media[0].url && (
-              <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none' }}>Ver Multimedia</a>
+              <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>Ver Multimedia</a>
             )}
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--surface-hover)', paddingTop: '1rem' }}>
+              <button onClick={() => handleEdit(e)} style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--neon-blue)', border: '1px solid var(--neon-blue)', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flex: 1 }}>Editar</button>
+              <button onClick={() => handleDelete(e.id)} style={{ padding: '0.5rem', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flex: 1 }}>Borrar</button>
+            </div>
           </div>
         ))}
       </div>
