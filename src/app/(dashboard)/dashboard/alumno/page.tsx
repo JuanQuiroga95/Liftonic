@@ -149,6 +149,15 @@ function RoutineViewer() {
   if (!routine || routine.error) return <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Tu profesor aún no te ha asignado una rutina.</p>;
 
   const activeWeek = routine.weeks?.[activeWeekIndex];
+  const [infoModal, setInfoModal] = useState<any>(null);
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return "";
+    let videoId = "";
+    if (url.includes("youtube.com/watch?v=")) videoId = url.split("v=")[1].split("&")[0];
+    else if (url.includes("youtu.be/")) videoId = url.split("youtu.be/")[1].split("?")[0];
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+  };
   
   const toggleExercise = (exId: string) => {
     setExpandedExercises(prev => ({ ...prev, [exId]: !prev[exId] }));
@@ -237,19 +246,23 @@ function RoutineViewer() {
                     if (!isExpanded) {
                       // Pill view
                       return (
-                        <button 
-                          key={ex.id}
-                          onClick={() => toggleExercise(ex.id)}
-                          style={{ 
-                            backgroundColor: color.bg, border: `1px solid ${color.border}`, 
-                            padding: '0.5rem 1rem', borderRadius: '2rem', color: 'var(--foreground)',
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            fontSize: '0.875rem'
-                          }}
-                        >
-                          <strong style={{ color: color.border }}>{ex.exercise_name}</strong>
-                          <span style={{ opacity: 0.8 }}>{summarizeSets(ex.sets)}</span>
-                        </button>
+                        <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button 
+                            onClick={() => toggleExercise(ex.id)}
+                            style={{ 
+                              backgroundColor: color.bg, border: `1px solid ${color.border}`, 
+                              padding: '0.5rem 1rem', borderRadius: '2rem', color: 'var(--foreground)',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            <strong style={{ color: color.border }}>{ex.exercise_name}</strong>
+                            <span style={{ opacity: 0.8 }}>{summarizeSets(ex.sets)}</span>
+                          </button>
+                          <button onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--foreground)', fontSize: '1rem' }}>
+                            ℹ️
+                          </button>
+                        </div>
                       );
                     }
 
@@ -257,7 +270,12 @@ function RoutineViewer() {
                     return (
                       <div key={ex.id} style={{ width: '100%', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', padding: '1rem', marginTop: '0.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                          <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
+                            <button onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--foreground)', fontSize: '0.9rem' }}>
+                              ℹ️
+                            </button>
+                          </div>
                           <button onClick={() => toggleExercise(ex.id)} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer' }}>Cerrar</button>
                         </div>
                         
@@ -299,6 +317,47 @@ function RoutineViewer() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Info Modal */}
+      {infoModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: 'var(--neon-blue)', fontSize: '1.25rem' }}>{infoModal.exercise_name}</h3>
+              <button onClick={() => setInfoModal(null)} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: '1.5rem', lineHeight: 1 }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
+              {infoModal.media && infoModal.media[0]?.url ? (
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, marginBottom: '1.5rem', backgroundColor: '#000', borderRadius: '0.5rem', overflow: 'hidden' }}>
+                  <iframe 
+                    src={getEmbedUrl(infoModal.media[0].url)} 
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
+                    allowFullScreen
+                    title={infoModal.exercise_name}
+                  ></iframe>
+                </div>
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--surface-hover)', borderRadius: '0.5rem', marginBottom: '1.5rem', border: '1px dashed var(--border)' }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>📷</span>
+                  <p style={{ margin: 0, color: 'var(--foreground-muted)' }}>No hay video asignado a este ejercicio.</p>
+                </div>
+              )}
+
+              <div>
+                <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground)' }}>Instrucciones</h4>
+                <p style={{ margin: 0, color: 'var(--foreground-muted)', fontSize: '0.9rem', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                  {infoModal.description || "El profesor aún no ha añadido una descripción para este ejercicio."}
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--surface-hover)', textAlign: 'right' }}>
+              <button onClick={() => setInfoModal(null)} style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)', cursor: 'pointer' }}>Cerrar</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

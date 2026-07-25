@@ -354,16 +354,15 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         <textarea placeholder="Descripción / Notas (Opcional)" value={description} onChange={e => setDescription(e.target.value)} rows={3} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         
         <select value={mediaType} onChange={e => setMediaType(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }}>
-          <option value="NONE">Sin Multimedia (Solo texto)</option>
-          <option value="LINK">Link de YouTube/Insta</option>
-          <option value="UPLOAD">Subir Archivo (Cloudinary)</option>
+          <option value="NONE">Sin Video (Solo texto)</option>
+          <option value="LINK">Enlace a Video (YouTube / Instagram)</option>
         </select>
         
         {mediaType === "LINK" && (
-          <input placeholder="URL del video" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
-        )}
-        {mediaType === "UPLOAD" && (
-          <input type="file" onChange={e => setFile(e.target.files?.[0] || null)} required style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+          <div>
+            <input placeholder="Ej: https://www.youtube.com/watch?v=..." value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Copiá y pegá el link de YouTube. El alumno lo podrá reproducir directamente en la app.</p>
+          </div>
         )}
         
         <button type="submit" disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{loading ? 'Guardando...' : 'Crear Ejercicio'}</button>

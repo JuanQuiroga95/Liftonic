@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       const days = [];
       for (const day of daysRes.rows) {
         const exercisesRes = await query(`
-          SELECT de.*, e.name as exercise_name,
+          SELECT de.*, e.name as exercise_name, e.description,
             (SELECT json_agg(json_build_object('type', em.type, 'url', em.url)) 
              FROM exercise_media em WHERE em.exercise_id = e.id) as media
           FROM daily_exercises de
