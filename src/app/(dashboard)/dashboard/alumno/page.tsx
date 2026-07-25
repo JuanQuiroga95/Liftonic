@@ -129,7 +129,7 @@ export default function AlumnoDashboard() {
           </div>
         )}
 
-        <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
           {renderTabContent()}
         </div>
       </div>
@@ -307,10 +307,42 @@ function RoutineViewer() {
 
 function ProgressViewer() {
   const [progress, setProgress] = useState<any>(null);
+  const [toggling, setToggling] = useState<Record<string, boolean>>({});
   
   useEffect(() => {
     fetch('/api/alumno/progress').then(r => r.json()).then(setProgress);
   }, []);
+
+  const handleTogglePlan = async (dateStr: string, hasAttended: boolean) => {
+    // Si ya asistió, no lo puede marcar como "planeado" porque ya es un hecho consumado
+    if (hasAttended) return;
+    
+    const isPlanned = progress.plannedDates?.includes(dateStr);
+    const action = isPlanned ? 'remove' : 'add';
+    
+    setToggling(prev => ({ ...prev, [dateStr]: true }));
+    
+    try {
+      const res = await fetch('/api/alumno/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateStr, action })
+      });
+      
+      if (res.ok) {
+        setProgress((prev: any) => ({
+          ...prev,
+          plannedDates: isPlanned 
+            ? (prev.plannedDates || []).filter((d: string) => d !== dateStr) 
+            : [...(prev.plannedDates || []), dateStr]
+        }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    
+    setToggling(prev => ({ ...prev, [dateStr]: false }));
+  };
 
   if (!progress) return <div style={{padding: '2rem', textAlign: 'center', color: 'var(--foreground-muted)'}}>Cargando progreso...</div>;
 
@@ -326,10 +358,10 @@ function ProgressViewer() {
     calendarDays.push(null);
   }
   for(let i = 1; i <= daysInMonth; i++) {
-    const d = new Date(year, month, i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
     const hasAttended = progress.attendanceDates?.includes(dateStr);
-    calendarDays.push({ date: i, hasAttended, dateStr });
+    const isPlanned = progress.plannedDates?.includes(dateStr);
+    calendarDays.push({ date: i, hasAttended, isPlanned, dateStr });
   }
 
   return (
@@ -337,43 +369,78 @@ function ProgressViewer() {
       <h2 style={{ color: 'var(--neon-blue)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tu Progreso</h2>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>{progress.trainedDays || 0}</div>
-          <div style={{ color: 'var(--foreground-muted)' }}>Días Entrenados</div>
+          <div style={{ color: 'var(--foreground)' }}>Días Entrenados</div>
         </div>
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{progress.streak || 0}</div>
-          <div style={{ color: 'var(--foreground-muted)' }}>Semanas de Racha</div>
+          <div style={{ color: 'var(--foreground)' }}>Semanas de Racha</div>
         </div>
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{progress.compliance || 0}%</div>
-          <div style={{ color: 'var(--foreground-muted)' }}>Cumplimiento</div>
+          <div style={{ color: 'var(--foreground)' }}>Cumplimiento</div>
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '300px' }}>
-        <h3 style={{ margin: '0 0 1rem 0', color: 'var(--foreground)' }}>Asistencia: {today.toLocaleString('es', { month: 'long', year: 'numeric' })}</h3>
+      <div style={{ backgroundColor: 'var(--surface-hover)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '300px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <h3 style={{ margin: '0', color: 'var(--foreground)' }}>Calendario de Entrenamientos</h3>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '1rem', height: '1rem', backgroundColor: 'var(--neon-blue)', borderRadius: '0.25rem' }}></div>
+              <span style={{ color: 'var(--foreground)' }}>Entrenado</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '1rem', height: '1rem', backgroundColor: 'var(--surface)', border: '1px solid var(--neon-pink)', borderRadius: '0.25rem' }}></div>
+              <span style={{ color: 'var(--foreground)' }}>Planeado</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ marginBottom: '1rem', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>
+          {today.toLocaleString('es', { month: 'long', year: 'numeric' })}. Haz clic en un día futuro para planificar tu asistencia.
+        </div>
+        
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
           {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(day => (
             <div key={day} style={{ fontWeight: 'bold', color: 'var(--foreground-muted)', marginBottom: '0.5rem' }}>{day}</div>
           ))}
           {calendarDays.map((dayObj, i) => {
             if (!dayObj) return <div key={i} style={{ padding: '0.5rem' }}></div>;
+            
+            const isToggling = toggling[dayObj.dateStr];
+            let bgColor = 'var(--surface)';
+            let color = 'var(--foreground)';
+            let border = '1px solid var(--border)';
+            
+            if (dayObj.hasAttended) {
+              bgColor = 'var(--neon-blue)';
+              color = 'var(--background)';
+            } else if (dayObj.isPlanned) {
+              border = '1px dashed var(--neon-pink)';
+              color = 'var(--neon-pink)';
+            }
+            
             return (
-              <div 
+              <button 
                 key={i} 
+                onClick={() => handleTogglePlan(dayObj.dateStr, dayObj.hasAttended)}
+                disabled={isToggling}
                 style={{ 
                   padding: '0.75rem 0.5rem', 
-                  backgroundColor: dayObj.hasAttended ? 'var(--neon-blue)' : 'var(--surface)', 
-                  color: dayObj.hasAttended ? 'var(--background)' : 'var(--foreground)',
+                  backgroundColor: bgColor, 
+                  color: color,
                   borderRadius: '0.5rem', 
-                  border: '1px solid var(--border)',
-                  fontWeight: dayObj.hasAttended ? 'bold' : 'normal'
+                  border: border,
+                  fontWeight: (dayObj.hasAttended || dayObj.isPlanned) ? 'bold' : 'normal',
+                  cursor: dayObj.hasAttended ? 'default' : 'pointer',
+                  opacity: isToggling ? 0.5 : 1,
+                  transition: 'all 0.2s'
                 }}
                 title={dayObj.dateStr}
               >
                 {dayObj.date}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -419,7 +486,7 @@ function MetricsViewer() {
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {topMetrics.map(m => (
-          <div key={m.exercise} style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <div key={m.exercise} style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>{m.exercise}</h3>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
               <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{m.pr}</span>
@@ -431,7 +498,7 @@ function MetricsViewer() {
       </div>
 
       {metrics.map(m => (
-        <div key={m.exercise + '_chart'} style={{ marginTop: '1.5rem', backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+        <div key={m.exercise + '_chart'} style={{ marginTop: '1.5rem', backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
           <h3 style={{ margin: '0 0 1rem 0', color: 'var(--foreground)', fontSize: '1.1rem' }}>Evolución: {m.exercise}</h3>
           <div style={{ height: '250px', width: '100%' }}>
             {m.history.length > 1 ? (
@@ -468,7 +535,7 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
           <h3 style={{ fontSize: '1.1rem', color: 'var(--neon-blue)', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Datos Físicos</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Edad:</span> <strong>{anamnesis.age ? `${anamnesis.age} años` : '-'}</strong></div>
@@ -478,7 +545,7 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
           </div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
           <h3 style={{ fontSize: '1.1rem', color: 'var(--neon-pink)', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Objetivos y Preferencias</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Frecuencia:</span> <strong>{anamnesis.weekly_frequency ? `${anamnesis.weekly_frequency} días/sem` : '-'}</strong></div>
@@ -490,7 +557,7 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
           </div>
         </div>
 
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
+        <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
           <h3 style={{ fontSize: '1.1rem', color: '#f59e0b', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Historial y Observaciones</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             <div>

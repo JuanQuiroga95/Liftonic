@@ -54,7 +54,20 @@ export async function GET(request: Request, context: any) {
       return date.toISOString().split('T')[0];
     });
 
-    return NextResponse.json({ trainedDays, streak, compliance, attendanceDates });
+    const plannedQuery = `
+      SELECT date
+      FROM planned_attendance
+      WHERE student_id = $1
+    `;
+
+    // Intentamos obtener las planeadas
+    let plannedDates: string[] = [];
+    try {
+      const plannedRes = await query(plannedQuery, [studentId]);
+      plannedDates = plannedRes.rows.map(r => new Date(r.date).toISOString().split('T')[0]);
+    } catch(e) {}
+
+    return NextResponse.json({ trainedDays, streak, compliance, attendanceDates, plannedDates });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });

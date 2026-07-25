@@ -419,21 +419,85 @@ export default function StudentDetailView() {
             <h2 style={{ color: 'var(--neon-blue)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Progreso del Alumno</h2>
             {progress ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>{progress.trainedDays || 0}</div>
-                  <div style={{ color: 'var(--foreground-muted)' }}>Días Entrenados</div>
+                  <div style={{ color: 'var(--foreground)' }}>Días Entrenados</div>
                 </div>
-                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{progress.streak || 0}</div>
-                  <div style={{ color: 'var(--foreground-muted)' }}>Semanas de Racha</div>
+                  <div style={{ color: 'var(--foreground)' }}>Semanas de Racha</div>
                 </div>
-                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
                   <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{progress.compliance || 0}%</div>
-                  <div style={{ color: 'var(--foreground-muted)' }}>Cumplimiento</div>
+                  <div style={{ color: 'var(--foreground)' }}>Cumplimiento</div>
                 </div>
               </div>
             ) : (
               <p style={{ color: 'var(--foreground-muted)' }}>Cargando progreso...</p>
+            )}
+            
+            {/* Calendario (Solo Lectura) */}
+            {progress && (
+              <div style={{ backgroundColor: 'var(--surface-hover)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '300px', marginTop: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+                  <h3 style={{ margin: '0', color: 'var(--foreground)' }}>Asistencia: {new Date().toLocaleString('es', { month: 'long', year: 'numeric' })}</h3>
+                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.875rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '1rem', height: '1rem', backgroundColor: 'var(--neon-blue)', borderRadius: '0.25rem' }}></div>
+                      <span style={{ color: 'var(--foreground)' }}>Entrenado</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '1rem', height: '1rem', backgroundColor: 'var(--surface)', border: '1px solid var(--neon-pink)', borderRadius: '0.25rem' }}></div>
+                      <span style={{ color: 'var(--foreground)' }}>Planeado</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+                  {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(day => (
+                    <div key={day} style={{ fontWeight: 'bold', color: 'var(--foreground-muted)', marginBottom: '0.5rem' }}>{day}</div>
+                  ))}
+                  
+                  {Array.from({ length: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() + (new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay() === 0 ? 6 : new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay() - 1) }).map((_, i) => {
+                    const offset = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay() === 0 ? 6 : new Date(new Date().getFullYear(), new Date().getMonth(), 1).getDay() - 1;
+                    if (i < offset) return <div key={i} style={{ padding: '0.5rem' }}></div>;
+                    
+                    const dateNum = i - offset + 1;
+                    const dateStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(dateNum).padStart(2, '0')}`;
+                    const hasAttended = progress.attendanceDates?.includes(dateStr);
+                    const isPlanned = progress.plannedDates?.includes(dateStr);
+                    
+                    let bgColor = 'var(--surface)';
+                    let color = 'var(--foreground)';
+                    let border = '1px solid var(--border)';
+                    
+                    if (hasAttended) {
+                      bgColor = 'var(--neon-blue)';
+                      color = 'var(--background)';
+                    } else if (isPlanned) {
+                      border = '1px dashed var(--neon-pink)';
+                      color = 'var(--neon-pink)';
+                    }
+                    
+                    return (
+                      <div 
+                        key={i} 
+                        style={{ 
+                          padding: '0.75rem 0.5rem', 
+                          backgroundColor: bgColor, 
+                          color: color,
+                          borderRadius: '0.5rem', 
+                          border: border,
+                          fontWeight: (hasAttended || isPlanned) ? 'bold' : 'normal',
+                        }}
+                        title={dateStr}
+                      >
+                        {dateNum}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
 

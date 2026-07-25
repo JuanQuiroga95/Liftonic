@@ -47,11 +47,25 @@ export async function GET() {
       return date.toISOString().split('T')[0];
     });
 
+    const plannedQuery = `
+      SELECT date
+      FROM planned_attendance
+      WHERE student_id = $1
+    `;
+
+    let plannedDates: string[] = [];
+    try {
+      const plannedRes = await query(plannedQuery, [userId]);
+      plannedDates = plannedRes.rows.map(r => new Date(r.date).toISOString().split('T')[0]);
+    } catch(e) {
+    }
+
     return NextResponse.json({
       trainedDays,
       streak,
       compliance,
-      attendanceDates
+      attendanceDates,
+      plannedDates
     });
   } catch (error) {
     console.error(error);
