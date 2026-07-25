@@ -72,7 +72,7 @@ export default function ProfessorDashboard() {
               </div>
             </div>
           )}
-          <button onClick={() => { window.location.href = '/api/auth/signout'; }} style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 'bold' }}>Cerrar Sesión</button>
+          <button className="btn-danger" onClick={() => { window.location.href = '/api/auth/signout'; }}>Cerrar Sesión</button>
         </div>
       </header>
 
@@ -156,7 +156,7 @@ function ProfessorProfile({ profile, onReload }: { profile: any, onReload: () =>
           <input value={name} onChange={e => setName(e.target.value)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         </div>
 
-        <button type="submit" disabled={saving} style={{ padding: '0.75rem', backgroundColor: 'var(--neon-blue)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', marginTop: '1rem' }}>
+        <button className="btn-primary" type="submit" disabled={saving} style={{ marginTop: '1rem' }}>
           {saving ? 'Guardando cambios...' : 'Guardar Perfil'}
         </button>
       </form>
@@ -241,7 +241,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
           <h2 style={{ color: 'var(--foreground)' }}>Mis Alumnos</h2>
           <p style={{ color: 'var(--foreground-muted)' }}>Gestiona a tus alumnos y su historial.</p>
         </div>
-        <button onClick={handleOpenCreate} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>+ Nuevo Alumno</button>
+        <button className="btn-primary" onClick={handleOpenCreate}>+ Nuevo Alumno</button>
       </div>
 
       {showModal && (
@@ -261,8 +261,8 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
               <input value={password} onChange={e => setPassword(e.target.value)} required={!editingId} type="text" style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" onClick={() => setShowModal(false)} style={{ padding: '0.75rem 1rem', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer' }}>Cancelar</button>
-              <button type="submit" disabled={saving} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-blue)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer' }}>{saving ? 'Guardando...' : 'Guardar'}</button>
+              <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+              <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button>
             </div>
           </form>
         </div>
@@ -285,10 +285,10 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.name}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.username}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
-                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--foreground)', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem', fontWeight: 'bold' }} onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
-                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem' }} onClick={() => handleOpenEdit(s)}>Editar</button>
-                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--neon-blue)', border: '1px solid var(--neon-blue)', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem' }} onClick={() => handleReset(s.id)}>Resetear Formulario</button>
-                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '0.5rem', cursor: 'pointer' }} onClick={() => handleDelete(s.id)}>Eliminar</button>
+                  <button className="btn-primary" style={{ marginRight: '0.5rem' }} onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
+                  <button className="btn-ghost" style={{ marginRight: '0.5rem' }} onClick={() => handleOpenEdit(s)}>Editar</button>
+                  <button className="btn-outline-blue" style={{ marginRight: '0.5rem' }} onClick={() => handleReset(s.id)}>Resetear Formulario</button>
+                  <button className="btn-danger" onClick={() => handleDelete(s.id)}>Eliminar</button>
                 </td>
               </tr>
             ))
@@ -435,11 +435,11 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         )}
         
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button type="submit" disabled={loading} style={{ flex: 1, padding: '0.75rem 1.5rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer' }}>
+          <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 1 }}>
             {loading ? 'Guardando...' : (editingId ? 'Actualizar Ejercicio' : 'Crear Ejercicio')}
           </button>
           {editingId && (
-            <button type="button" onClick={cancelEdit} disabled={loading} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: loading ? 'not-allowed' : 'pointer' }}>
+            <button type="button" className="btn-ghost" onClick={cancelEdit} disabled={loading}>
               Cancelar
             </button>
           )}
@@ -455,8 +455,8 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
               <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>Ver Multimedia</a>
             )}
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--surface-hover)', paddingTop: '1rem' }}>
-              <button onClick={() => handleEdit(e)} style={{ padding: '0.5rem', backgroundColor: 'transparent', color: 'var(--neon-blue)', border: '1px solid var(--neon-blue)', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flex: 1 }}>Editar</button>
-              <button onClick={() => handleDelete(e.id)} style={{ padding: '0.5rem', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.75rem', flex: 1 }}>Borrar</button>
+              <button className="btn-outline-blue" onClick={() => handleEdit(e)} style={{ fontSize: '0.75rem', flex: 1 }}>Editar</button>
+              <button className="btn-danger" onClick={() => handleDelete(e.id)} style={{ fontSize: '0.75rem', flex: 1 }}>Borrar</button>
             </div>
           </div>
         ))}

@@ -178,7 +178,7 @@ export default function StudentDetailView() {
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-        <button onClick={() => router.push('/dashboard/profesor')} style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', padding: '0.5rem 1rem', borderRadius: '0.5rem', color: 'var(--foreground)', cursor: 'pointer' }}>
+        <button className="btn-ghost" onClick={() => router.push('/dashboard/profesor')}>
           ← Volver
         </button>
         <div style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: 'var(--surface)', border: '2px solid var(--neon-fuchsia)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -214,9 +214,9 @@ export default function StudentDetailView() {
                   <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{routine.weeks?.length} sem. Creado: {new Date(routine.start_date).toLocaleDateString()}</span>
                 </div>
                 <button 
+                  className="btn-danger"
                   onClick={handleDeleteRoutine} 
                   disabled={deletingRoutine}
-                  style={{ background: 'rgba(255, 0, 0, 0.1)', border: '1px solid #ef4444', padding: '0.5rem 1rem', borderRadius: '0.5rem', color: '#ef4444', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                   {deletingRoutine ? 'Eliminando...' : 'Eliminar Rutina'}
                 </button>
@@ -286,10 +286,10 @@ export default function StudentDetailView() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                                   <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
                                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button onClick={() => handleSaveSets(ex.id, ex.id)} disabled={savingEx === ex.id} style={{ background: 'var(--neon-blue)', border: 'none', color: 'var(--background)', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                    <button className="btn-primary" onClick={() => handleSaveSets(ex.id, ex.id)} disabled={savingEx === ex.id} style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem' }}>
                                       {savingEx === ex.id ? 'Guardando...' : 'Guardar Cambios'}
                                     </button>
-                                    <button onClick={() => toggleExercise(ex.id)} style={{ background: 'transparent', border: '1px solid var(--border)', color: 'var(--foreground-muted)', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Cerrar</button>
+                                    <button className="btn-ghost" onClick={() => toggleExercise(ex.id)} style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem' }}>Cerrar</button>
                                   </div>
                                 </div>
                                 

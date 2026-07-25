@@ -74,18 +74,73 @@ a {
   text-decoration: none;
 }
 
-/* Global Button Hover Dynamics */
-button {
+/* --- BUTTON SYSTEM --- */
+.btn-primary, .btn-outline-blue, .btn-danger, .btn-ghost {
   transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
 }
 
-button:hover:not(:disabled) {
-  opacity: 0.85;
+.btn-primary {
+  background-color: var(--neon-fuchsia);
+  color: #ffffff;
+  border: none;
+}
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.1);
+  filter: brightness(1.2);
+  box-shadow: 0 4px 15px -3px var(--neon-fuchsia);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-button:active:not(:disabled) {
-  transform: translateY(1px);
-  opacity: 1;
+.btn-outline-blue {
+  background-color: transparent;
+  color: var(--neon-blue);
+  border: 1px solid var(--neon-blue);
+}
+.btn-outline-blue:hover:not(:disabled) {
+  background-color: var(--neon-blue);
+  color: var(--background);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px -3px var(--neon-blue);
+}
+.btn-outline-blue:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background-color: transparent;
+  color: #ff4d4d;
+  border: 1px solid #ff4d4d;
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: #ff4d4d;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px -3px #ff4d4d;
+}
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--foreground-muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--surface-hover);
+  color: var(--foreground);
+  transform: translateY(-2px);
+}
+.btn-ghost:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

@@ -115,8 +115,8 @@ function ExerciseAutocomplete({
         <input placeholder="Variación (Opcional)" value={newVar} onChange={e => setNewVar(e.target.value)} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--surface-hover)', color: 'var(--foreground)' }} />
         <textarea placeholder="Descripción (Opcional)" value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={2} style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border)', backgroundColor: 'var(--surface-hover)', color: 'var(--foreground)' }} />
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => setIsCreating(false)} style={{ flex: 1, padding: '0.5rem', background: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.25rem', cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={handleCreate} disabled={saving} style={{ flex: 1, padding: '0.5rem', background: 'var(--neon-blue)', color: '#ffffff', border: 'none', borderRadius: '0.25rem', cursor: 'pointer', fontWeight: 'bold' }}>{saving ? 'Guardando...' : 'Crear y Usar'}</button>
+          <button className="btn-ghost" onClick={() => setIsCreating(false)} style={{ flex: 1 }}>Cancelar</button>
+          <button className="btn-primary" onClick={handleCreate} disabled={saving} style={{ flex: 1, backgroundColor: 'var(--neon-blue)' }}>{saving ? 'Guardando...' : 'Crear y Usar'}</button>
         </div>
       </div>
     );
@@ -404,7 +404,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
           <div key={week.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ color: 'var(--neon-pink)', margin: 0 }}>Semana {wIndex + 1}</h3>
-              <button onClick={() => addDay(week.id)} style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--neon-blue)', border: '1px solid var(--neon-blue)', borderRadius: '0.5rem', cursor: 'pointer' }}>+ Agregar Día</button>
+              <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem' }}>
@@ -423,7 +423,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                       <div key={ex.id} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1}</span>
-                          <button onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '0.75rem' }}>X</button>
+                          <button className="btn-ghost" onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>X</button>
                         </div>
                         
                         <ExerciseAutocomplete 
@@ -474,21 +474,22 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                               </div>
 
                               <div style={{ width: '2rem', textAlign: 'center' }}>
-                                <button onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', fontSize: '1rem' }}>×</button>
+                              <div style={{ textAlign: 'center' }}>
+                                <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>×</button>
                               </div>
                             </div>
                           ))}
                           
-                          <button onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', padding: '0.75rem', backgroundColor: 'transparent', color: 'var(--foreground-muted)', border: 'none', borderTop: '1px dashed var(--border)', cursor: 'pointer', fontSize: '0.875rem' }}>
-                            + Agregar serie
+                          <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0 }}>
+                            + Añadir Serie
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <button onClick={() => addExercise(week.id, day.id)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'rgba(0, 229, 255, 0.1)', color: 'var(--neon-blue)', border: '1px dashed var(--neon-blue)', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>
-                    + Agregar Ejercicio
+                  <button className="btn-outline-blue" onClick={() => addExercise(week.id, day.id)} style={{ width: '100%', borderStyle: 'dashed', backgroundColor: 'rgba(0, 229, 255, 0.05)' }}>
+                    + Añadir Ejercicio
                   </button>
                 </div>
               ))}
@@ -498,9 +499,9 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={addWeek} style={{ padding: '0.75rem 1.5rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer' }}>+ Agregar Semana</button>
-        <button onClick={handleSave} disabled={saving} style={{ padding: '0.75rem 2rem', backgroundColor: 'var(--neon-fuchsia)', color: '#ffffff', border: 'none', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}>
-          {saving ? 'Guardando Rutina...' : 'Guardar y Asignar Rutina'}
+        <button className="btn-ghost" onClick={addWeek}>+ Agregar Semana</button>
+        <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>
+          {saving ? 'Guardando Rutina...' : 'Guardar y Finalizar Rutina'}
         </button>
       </div>
 

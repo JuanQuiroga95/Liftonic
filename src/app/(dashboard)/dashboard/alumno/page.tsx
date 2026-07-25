@@ -259,7 +259,7 @@ function RoutineViewer() {
                             <strong style={{ color: color.border }}>{ex.exercise_name}</strong>
                             <span style={{ opacity: 0.8 }}>{summarizeSets(ex.sets)}</span>
                           </button>
-                          <button onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--foreground)', fontSize: '1rem' }}>
+                          <button className="btn-ghost" onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', padding: 0 }}>
                             ℹ️
                           </button>
                         </div>
@@ -272,11 +272,11 @@ function RoutineViewer() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
-                            <button onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ background: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--foreground)', fontSize: '0.9rem' }}>
+                            <button className="btn-ghost" onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', padding: 0 }}>
                               ℹ️
                             </button>
                           </div>
-                          <button onClick={() => toggleExercise(ex.id)} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer' }}>Cerrar</button>
+                            <button className="btn-ghost" onClick={() => toggleExercise(ex.id)}>Cerrar</button>
                         </div>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -326,7 +326,7 @@ function RoutineViewer() {
           <div style={{ backgroundColor: 'var(--surface)', width: '100%', maxWidth: '600px', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
             <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--surface-hover)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, color: 'var(--neon-blue)', fontSize: '1.25rem' }}>{infoModal.exercise_name}</h3>
-              <button onClick={() => setInfoModal(null)} style={{ background: 'none', border: 'none', color: 'var(--foreground-muted)', cursor: 'pointer', fontSize: '1.5rem', lineHeight: 1 }}>&times;</button>
+              <button className="btn-ghost" onClick={() => setInfoModal(null)} style={{ fontSize: '1.5rem', lineHeight: 1, padding: '0 0.5rem' }}>&times;</button>
             </div>
             
             <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
@@ -369,7 +369,7 @@ function RoutineViewer() {
             </div>
             
             <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--surface-hover)', textAlign: 'right' }}>
-              <button onClick={() => setInfoModal(null)} style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)', cursor: 'pointer' }}>Cerrar</button>
+              <button className="btn-ghost" onClick={() => setInfoModal(null)}>Cerrar</button>
             </div>
           </div>
         </div>
