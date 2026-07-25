@@ -332,6 +332,7 @@ export default function StudentDetailView() {
                                   </div>
                                 </div>
                               </div>
+                            </div>
                             );
                           })}
                         </div>
