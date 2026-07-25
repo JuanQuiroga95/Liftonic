@@ -230,7 +230,7 @@ export default function StudentDetailView() {
                     onClick={() => setActiveWeekIndex(idx)}
                     style={{ 
                       minWidth: '70px', padding: '0.75rem', borderRadius: '0.5rem', 
-                      backgroundColor: idx === activeWeekIndex ? 'var(--surface-hover)' : 'var(--background)',
+                      backgroundColor: idx === activeWeekIndex ? 'var(--surface-hover)' : 'var(--surface)',
                       border: `1px solid ${idx === activeWeekIndex ? 'var(--neon-fuchsia)' : 'var(--border)'}`,
                       color: idx === activeWeekIndex ? 'var(--neon-fuchsia)' : 'var(--foreground-muted)',
                       cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
@@ -246,7 +246,7 @@ export default function StudentDetailView() {
               {activeWeek && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {activeWeek.days?.map((day: any) => (
-                    <div key={day.id} style={{ backgroundColor: 'var(--background)', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                    <div key={day.id} style={{ backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
                       <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--surface-hover)' }}>
                         <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', color: 'var(--neon-blue)' }}>
                           D
