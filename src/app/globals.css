@@ -144,3 +144,15 @@ a {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* --- RESPONSIVE UTILITIES --- */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.table-responsive-inner {
+  min-width: 700px;
+}

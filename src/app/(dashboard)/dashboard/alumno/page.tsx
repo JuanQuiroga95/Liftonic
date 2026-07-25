@@ -279,7 +279,9 @@ function RoutineViewer() {
                             <button className="btn-ghost" onClick={() => toggleExercise(ex.id)}>Cerrar</button>
                         </div>
                         
-                        <div style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div className="table-responsive">
+                          <div className="table-responsive-inner" style={{ paddingBottom: '0.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 1fr 40px', gap: '0.5rem', alignItems: 'center', fontSize: '0.75rem', color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                           <div style={{ textAlign: 'center' }}>#</div>
                           <div style={{ textAlign: 'center' }}>Peso (kg)</div>
                           <div style={{ textAlign: 'center' }}>Reps</div>
@@ -309,6 +311,8 @@ function RoutineViewer() {
                               </div>
                             </div>
                           ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );

@@ -434,8 +434,9 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                         />
 
                         {/* Tabla de Series */}
-                        <div style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                          <div style={{ display: 'flex', padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                        <div className="table-responsive" style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
+                          <div className="table-responsive-inner">
+                            <div style={{ display: 'flex', padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
                             <div style={{ width: '2rem', textAlign: 'center' }}>#</div>
                             <div style={{ flex: 1 }}>REPS</div>
                             <div style={{ flex: 1 }}>PROFESOR</div>
@@ -482,6 +483,7 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                           <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0 }}>
                             + Añadir Serie
                           </button>
+                          </div>
                         </div>
                       </div>
                     ))}

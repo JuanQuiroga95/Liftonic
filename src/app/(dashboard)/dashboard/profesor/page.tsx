@@ -268,7 +268,8 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
         </div>
       )}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="table-responsive">
+        <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
             <th style={{ padding: '1rem', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--foreground-muted)', textTransform: 'uppercase', fontSize: '0.875rem' }}>Nombre</th>
@@ -285,16 +286,19 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.name}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.username}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
-                  <button className="btn-primary" style={{ marginRight: '0.5rem' }} onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
-                  <button className="btn-ghost" style={{ marginRight: '0.5rem' }} onClick={() => handleOpenEdit(s)}>Editar</button>
-                  <button className="btn-outline-blue" style={{ marginRight: '0.5rem' }} onClick={() => handleReset(s.id)}>Resetear Formulario</button>
-                  <button className="btn-danger" onClick={() => handleDelete(s.id)}>Eliminar</button>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <button className="btn-primary" onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
+                    <button className="btn-ghost" onClick={() => handleOpenEdit(s)}>Editar</button>
+                    <button className="btn-outline-blue" onClick={() => handleReset(s.id)}>Resetear Formulario</button>
+                    <button className="btn-danger" onClick={() => handleDelete(s.id)}>Eliminar</button>
+                  </div>
                 </td>
               </tr>
             ))
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
