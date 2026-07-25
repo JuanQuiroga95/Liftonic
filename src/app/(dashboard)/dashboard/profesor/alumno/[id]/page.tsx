@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function StudentDetailView() {
   const router = useRouter();
@@ -21,6 +22,10 @@ export default function StudentDetailView() {
   // Anamnesis State
   const [anamnesisHistory, setAnamnesisHistory] = useState<any[]>([]);
   const [requestingAnamnesis, setRequestingAnamnesis] = useState(false);
+
+  // Progress and Metrics
+  const [progress, setProgress] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any[]>([]);
 
   const handleRequestAnamnesis = async () => {
     if (!confirm("¿Solicitar que el alumno complete una nueva encuesta de anamnesis? Esto ocultará su rutina hasta que lo haga.")) return;
@@ -131,6 +136,20 @@ export default function StudentDetailView() {
       .then(r => r.json())
       .then(data => {
         if (!data.error && Array.isArray(data)) setAnamnesisHistory(data);
+      });
+
+    // Fetch Progress
+    fetch(`/api/profesor/students/${id}/progress`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error) setProgress(data);
+      });
+
+    // Fetch Metrics
+    fetch(`/api/profesor/students/${id}/metrics`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error) setMetrics(data);
       });
   }, [id, params.id]);
 
@@ -394,9 +413,80 @@ export default function StudentDetailView() {
       )}
 
       {activeTab === 'metricas' && (
-        <div style={{ padding: '2rem', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px dashed var(--border)', textAlign: 'center' }}>
-          <h3 style={{ color: 'var(--neon-blue)', marginBottom: '1rem' }}>Métricas y RM</h3>
-          <p style={{ color: 'var(--foreground-muted)' }}>Gráficos de volumen y fatiga estarán disponibles aquí muy pronto.</p>
+        <div>
+          {/* PROGRESO */}
+          <div style={{ marginBottom: '3rem' }}>
+            <h2 style={{ color: 'var(--neon-blue)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Progreso del Alumno</h2>
+            {progress ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>{progress.trainedDays || 0}</div>
+                  <div style={{ color: 'var(--foreground-muted)' }}>Días Entrenados</div>
+                </div>
+                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{progress.streak || 0}</div>
+                  <div style={{ color: 'var(--foreground-muted)' }}>Semanas de Racha</div>
+                </div>
+                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{progress.compliance || 0}%</div>
+                  <div style={{ color: 'var(--foreground-muted)' }}>Cumplimiento</div>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: 'var(--foreground-muted)' }}>Cargando progreso...</p>
+            )}
+          </div>
+
+          {/* METRICAS */}
+          <div>
+            <h2 style={{ color: 'var(--neon-green)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Métricas y RM</h2>
+            {metrics.length === 0 ? (
+              <div style={{ padding: '2rem', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px dashed var(--border)', textAlign: 'center' }}>
+                <span style={{ fontSize: '3rem', marginBottom: '1rem', display: 'block' }}>📊</span>
+                <p style={{ color: 'var(--foreground-muted)' }}>Este alumno aún no tiene métricas registradas de su entrenamiento.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                  {metrics.slice(0, 3).map(m => (
+                    <div key={m.exercise} style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+                      <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>{m.exercise}</h3>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{m.pr}</span>
+                        <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - {m.date}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {metrics.map(m => (
+                  <div key={m.exercise + '_chart'} style={{ marginTop: '1.5rem', backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+                    <h3 style={{ margin: '0 0 1rem 0', color: 'var(--foreground)', fontSize: '1.1rem' }}>Evolución: {m.exercise}</h3>
+                    <div style={{ height: '250px', width: '100%' }}>
+                      {m.history.length > 1 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={m.history}>
+                            <XAxis dataKey="date" stroke="var(--foreground-muted)" fontSize={12} />
+                            <YAxis stroke="var(--foreground-muted)" fontSize={12} domain={['auto', 'auto']} />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}
+                              itemStyle={{ color: 'var(--neon-green)', fontWeight: 'bold' }}
+                            />
+                            <Line type="monotone" dataKey="weight" name="Peso (kg)" stroke="var(--neon-green)" strokeWidth={3} dot={{ r: 4, fill: 'var(--neon-green)' }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--foreground-muted)' }}>
+                          Se necesitan más registros para graficar la evolución.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
       )}
 

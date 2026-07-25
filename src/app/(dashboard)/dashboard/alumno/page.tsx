@@ -6,17 +6,20 @@ import LogoutButton from "@/components/ui/LogoutButton";
 
 export default function AlumnoDashboard() {
   const [anamnesis, setAnamnesis] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("entreno");
 
   useEffect(() => {
-    fetch('/api/alumno/anamnesis')
-      .then(r => r.json())
-      .then(data => {
-        setAnamnesis(data);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch('/api/alumno/anamnesis').then(r => r.json()),
+      fetch('/api/alumno/profile').then(r => r.json())
+    ]).then(([anamnesisData, profileData]) => {
+      setAnamnesis(anamnesisData);
+      setProfile(profileData);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) return <div style={{padding: '2rem', color: 'var(--neon-blue)', textAlign: 'center'}}>Cargando tu perfil...</div>;
@@ -113,6 +116,19 @@ export default function AlumnoDashboard() {
 
       {/* Main Content Area */}
       <div style={{ flex: 1, padding: '2rem', maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
+        
+        {/* Header con Saludo */}
+        {profile && (
+          <div style={{ marginBottom: '2rem' }}>
+            <h1 style={{ color: 'var(--foreground)', fontSize: '2.5rem', margin: '0 0 0.5rem 0' }}>
+              ¡Hola, {profile.name.split(' ')[0]}! 👋
+            </h1>
+            <p style={{ color: 'var(--foreground-muted)', fontSize: '1.1rem', margin: 0 }}>
+              Bienvenido de nuevo a tu espacio de entrenamiento.
+            </p>
+          </div>
+        )}
+
         <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
           {renderTabContent()}
         </div>
@@ -146,11 +162,23 @@ function RoutineViewer() {
 
   const summarizeSets = (sets: any[]) => {
     if (!sets || sets.length === 0) return "";
-    // Group sets by identical reps and RPE to create summaries like "1x1 @6 + 2x3 @5"
-    // For simplicity, we just join them or show a basic count if too complex.
     const summary = sets.map(s => `${s.reps} @${s.rpe}`).join(" + ");
     return summary.length > 20 ? `${sets.length} series` : summary;
   };
+
+  const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const todayName = daysOfWeek[new Date().getDay()];
+  
+  let todayMessage = "😴 Hoy descansamos";
+  if (activeWeek && activeWeek.days) {
+    const todayRoutine = activeWeek.days.find((d: any) => d.day_name.toLowerCase().includes(todayName.toLowerCase()));
+    if (todayRoutine) {
+      todayMessage = `💪 Hoy tenés gym: ${todayRoutine.day_name}`;
+    } else if (activeWeek.days.length > 0) {
+      // Fallback si los dias no se llaman lunes/martes sino dia 1, dia 2
+      todayMessage = `📅 Próximo entreno en tu rutina: ${activeWeek.days[0].day_name}`;
+    }
+  }
 
   return (
     <div style={{ paddingBottom: '4rem' }}>
@@ -159,6 +187,10 @@ function RoutineViewer() {
           <h2 style={{ margin: 0, color: 'var(--foreground)', fontSize: '1.5rem' }}>{routine.title}</h2>
           <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{routine.weeks?.length} sem. Creado: {new Date(routine.start_date).toLocaleDateString()}</span>
         </div>
+      </div>
+
+      <div style={{ backgroundColor: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--neon-blue)', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem', color: 'var(--neon-blue)', fontWeight: 'bold' }}>
+        {todayMessage}
       </div>
 
       {/* Week Selector Scroll */}
@@ -274,72 +306,154 @@ function RoutineViewer() {
 }
 
 function ProgressViewer() {
+  const [progress, setProgress] = useState<any>(null);
+  
+  useEffect(() => {
+    fetch('/api/alumno/progress').then(r => r.json()).then(setProgress);
+  }, []);
+
+  if (!progress) return <div style={{padding: '2rem', textAlign: 'center', color: 'var(--foreground-muted)'}}>Cargando progreso...</div>;
+
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  
+  const calendarDays = [];
+  const offset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; 
+  for(let i = 0; i < offset; i++) {
+    calendarDays.push(null);
+  }
+  for(let i = 1; i <= daysInMonth; i++) {
+    const d = new Date(year, month, i);
+    const dateStr = d.toISOString().split('T')[0];
+    const hasAttended = progress.attendanceDates?.includes(dateStr);
+    calendarDays.push({ date: i, hasAttended, dateStr });
+  }
+
   return (
     <div>
       <h2 style={{ color: 'var(--neon-blue)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tu Progreso</h2>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>12</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>{progress.trainedDays || 0}</div>
           <div style={{ color: 'var(--foreground-muted)' }}>Días Entrenados</div>
         </div>
         <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>3</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{progress.streak || 0}</div>
           <div style={{ color: 'var(--foreground-muted)' }}>Semanas de Racha</div>
         </div>
         <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>85%</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{progress.compliance || 0}%</div>
           <div style={{ color: 'var(--foreground-muted)' }}>Cumplimiento</div>
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: 'var(--foreground-muted)' }}>
-        <span style={{ fontSize: '3rem', marginBottom: '1rem' }}>📅</span>
-        <p>El calendario de asistencia estará disponible muy pronto.</p>
-        <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>¡Sigue registrando tus entrenamientos!</p>
+      <div style={{ backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '300px' }}>
+        <h3 style={{ margin: '0 0 1rem 0', color: 'var(--foreground)' }}>Asistencia: {today.toLocaleString('es', { month: 'long', year: 'numeric' })}</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(day => (
+            <div key={day} style={{ fontWeight: 'bold', color: 'var(--foreground-muted)', marginBottom: '0.5rem' }}>{day}</div>
+          ))}
+          {calendarDays.map((dayObj, i) => {
+            if (!dayObj) return <div key={i} style={{ padding: '0.5rem' }}></div>;
+            return (
+              <div 
+                key={i} 
+                style={{ 
+                  padding: '0.75rem 0.5rem', 
+                  backgroundColor: dayObj.hasAttended ? 'var(--neon-blue)' : 'var(--surface)', 
+                  color: dayObj.hasAttended ? 'var(--background)' : 'var(--foreground)',
+                  borderRadius: '0.5rem', 
+                  border: '1px solid var(--border)',
+                  fontWeight: dayObj.hasAttended ? 'bold' : 'normal'
+                }}
+                title={dayObj.dateStr}
+              >
+                {dayObj.date}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
 function MetricsViewer() {
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/alumno/metrics')
+      .then(r => r.json())
+      .then(data => {
+        setMetrics(data || []);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <div style={{padding: '2rem', textAlign: 'center', color: 'var(--foreground-muted)'}}>Cargando métricas...</div>;
+
+  if (metrics.length === 0) {
+    return (
+      <div>
+        <h2 style={{ color: 'var(--neon-green)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tus Métricas y Récords</h2>
+        <div style={{ marginTop: '2rem', backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center', color: 'var(--foreground-muted)' }}>
+          <span style={{ fontSize: '3rem', marginBottom: '1rem', display: 'block' }}>📊</span>
+          <p>Aún no hay métricas registradas. ¡Comienza a guardar tus entrenamientos!</p>
+        </div>
+      </div>
+    );
+  }
+
+  const topMetrics = metrics.slice(0, 3);
+  
   return (
     <div>
       <h2 style={{ color: 'var(--neon-green)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tus Métricas y Récords</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Sentadilla Libre</h3>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>100</span>
-            <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {topMetrics.map(m => (
+          <div key={m.exercise} style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>{m.exercise}</h3>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+              <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>{m.pr}</span>
+              <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - {m.date}</div>
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - hace 2 semanas</div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Peso Muerto</h3>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>120</span>
-            <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - hace 1 mes</div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Press Banca</h3>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>80</span>
-            <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - la semana pasada</div>
-        </div>
+        ))}
       </div>
 
-      <div style={{ marginTop: '2rem', backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center', color: 'var(--foreground-muted)' }}>
-        <span style={{ fontSize: '3rem', marginBottom: '1rem', display: 'block' }}>📊</span>
-        <p>Los gráficos de volumen y evolución de cargas están en desarrollo.</p>
-      </div>
+      {metrics.map(m => (
+        <div key={m.exercise + '_chart'} style={{ marginTop: '1.5rem', backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <h3 style={{ margin: '0 0 1rem 0', color: 'var(--foreground)', fontSize: '1.1rem' }}>Evolución: {m.exercise}</h3>
+          <div style={{ height: '250px', width: '100%' }}>
+            {m.history.length > 1 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={m.history}>
+                  <XAxis dataKey="date" stroke="var(--foreground-muted)" fontSize={12} />
+                  <YAxis stroke="var(--foreground-muted)" fontSize={12} domain={['auto', 'auto']} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}
+                    itemStyle={{ color: 'var(--neon-green)', fontWeight: 'bold' }}
+                  />
+                  <Line type="monotone" dataKey="weight" name="Peso (kg)" stroke="var(--neon-green)" strokeWidth={3} dot={{ r: 4, fill: 'var(--neon-green)' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--foreground-muted)' }}>
+                Se necesitan más registros para graficar la evolución.
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
