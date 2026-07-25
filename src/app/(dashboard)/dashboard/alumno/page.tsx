@@ -141,6 +141,7 @@ function RoutineViewer() {
   const [routine, setRoutine] = useState<any>(null);
   const [activeWeekIndex, setActiveWeekIndex] = useState(0);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+  const [infoModal, setInfoModal] = useState<any>(null);
 
   useEffect(() => {
     fetch('/api/alumno/routine').then(r => r.json()).then(setRoutine);
@@ -149,7 +150,6 @@ function RoutineViewer() {
   if (!routine || routine.error) return <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Tu profesor aún no te ha asignado una rutina.</p>;
 
   const activeWeek = routine.weeks?.[activeWeekIndex];
-  const [infoModal, setInfoModal] = useState<any>(null);
 
   const getEmbedUrl = (url: string) => {
     if (!url) return "";
