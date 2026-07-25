@@ -36,11 +36,11 @@ export default function AlumnoDashboard() {
       case "entreno":
         return <RoutineViewer />;
       case "progreso":
-        return <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--foreground-muted)' }}><span style={{ fontSize: '3rem' }}>📈</span><h2 style={{ color: 'var(--neon-blue)' }}>Progreso</h2><p>Próximamente verás tu evolución aquí.</p></div>;
+        return <ProgressViewer />;
       case "metricas":
-        return <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--foreground-muted)' }}><span style={{ fontSize: '3rem' }}>📊</span><h2 style={{ color: 'var(--neon-green)' }}>Métricas</h2><p>Tus PRs y estadísticas estarán disponibles pronto.</p></div>;
+        return <MetricsViewer />;
       case "perfil":
-        return <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--foreground-muted)' }}><span style={{ fontSize: '3rem' }}>👤</span><h2 style={{ color: 'var(--neon-fuchsia)' }}>Mi Perfil</h2><p>Configuración de tu cuenta próximamente.</p></div>;
+        return <ProfileViewer anamnesis={anamnesis} />;
       default:
         return <RoutineViewer />;
     }
@@ -269,6 +269,139 @@ function RoutineViewer() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ProgressViewer() {
+  return (
+    <div>
+      <h2 style={{ color: 'var(--neon-blue)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tu Progreso</h2>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>12</div>
+          <div style={{ color: 'var(--foreground-muted)' }}>Días Entrenados</div>
+        </div>
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>3</div>
+          <div style={{ color: 'var(--foreground-muted)' }}>Semanas de Racha</div>
+        </div>
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>85%</div>
+          <div style={{ color: 'var(--foreground-muted)' }}>Cumplimiento</div>
+        </div>
+      </div>
+
+      <div style={{ backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: 'var(--foreground-muted)' }}>
+        <span style={{ fontSize: '3rem', marginBottom: '1rem' }}>📅</span>
+        <p>El calendario de asistencia estará disponible muy pronto.</p>
+        <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>¡Sigue registrando tus entrenamientos!</p>
+      </div>
+    </div>
+  );
+}
+
+function MetricsViewer() {
+  return (
+    <div>
+      <h2 style={{ color: 'var(--neon-green)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tus Métricas y Récords</h2>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Sentadilla Libre</h3>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>100</span>
+            <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - hace 2 semanas</div>
+        </div>
+
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Peso Muerto</h3>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>120</span>
+            <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - hace 1 mes</div>
+        </div>
+
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>Press Banca</h3>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--neon-green)' }}>80</span>
+            <span style={{ color: 'var(--foreground-muted)' }}>kg</span>
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)', marginTop: '0.5rem' }}>PR histórico - la semana pasada</div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: '2rem', backgroundColor: 'var(--background)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center', color: 'var(--foreground-muted)' }}>
+        <span style={{ fontSize: '3rem', marginBottom: '1rem', display: 'block' }}>📊</span>
+        <p>Los gráficos de volumen y evolución de cargas están en desarrollo.</p>
+      </div>
+    </div>
+  );
+}
+
+function ProfileViewer({ anamnesis }: { anamnesis: any }) {
+  if (!anamnesis) return null;
+  
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 style={{ color: 'var(--neon-fuchsia)', margin: 0, fontSize: '1.5rem' }}>Mi Perfil de Entrenamiento</h2>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--neon-blue)', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Datos Físicos</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Edad:</span> <strong>{anamnesis.age ? `${anamnesis.age} años` : '-'}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Peso:</span> <strong>{anamnesis.current_weight ? `${anamnesis.current_weight} kg` : '-'}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Altura:</span> <strong>{anamnesis.height ? `${anamnesis.height} cm` : '-'}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Nutricionista:</span> <strong>{anamnesis.sees_nutritionist ? 'Sí' : 'No'}</strong></div>
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--neon-pink)', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Objetivos y Preferencias</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Frecuencia:</span> <strong>{anamnesis.weekly_frequency ? `${anamnesis.weekly_frequency} días/sem` : '-'}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>División:</span> <strong>{anamnesis.split_preference || '-'}</strong></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+              <span style={{ color: 'var(--foreground-muted)' }}>Objetivo principal:</span> 
+              <span style={{ backgroundColor: 'var(--surface)', padding: '0.5rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>{anamnesis.training_goal || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', gridColumn: '1 / -1' }}>
+          <h3 style={{ fontSize: '1.1rem', color: '#f59e0b', marginBottom: '1rem', borderBottom: '1px solid var(--surface-hover)', paddingBottom: '0.5rem' }}>Historial y Observaciones</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Experiencia previa:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.training_experience || 'Sin datos'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Lesiones o patologías:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem', color: anamnesis.injuries_conditions ? '#ff4d4d' : 'inherit' }}>{anamnesis.injuries_conditions || 'Ninguna'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Intereses musculares:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.muscle_interests || '-'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Otras actividades:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.other_activities || 'Ninguna'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+        <p style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem', marginBottom: '1rem' }}>¿Necesitas actualizar tus datos? Solicita a tu profesor que resetee tu formulario.</p>
+      </div>
     </div>
   );
 }
