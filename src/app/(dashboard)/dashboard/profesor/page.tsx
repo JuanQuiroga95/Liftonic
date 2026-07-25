@@ -48,7 +48,7 @@ export default function ProfessorDashboard() {
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ color: 'var(--neon-fuchsia)', fontSize: '2rem', margin: '0 0 1rem 0' }}>Panel de Profesor</h1>
+          <h1 style={{ color: 'var(--foreground)', fontSize: '2rem', margin: '0 0 1rem 0' }}>Panel de Profesor</h1>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button style={{ background: 'transparent', color: activeTab === 'alumnos' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'alumnos' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'alumnos' ? 'bold' : 'normal' }} onClick={() => setActiveTab('alumnos')}>Mis Alumnos</button>
             <button style={{ background: 'transparent', color: activeTab === 'rutinas' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'rutinas' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'rutinas' ? 'bold' : 'normal' }} onClick={() => setActiveTab('rutinas')}>Constructor de Rutinas</button>
@@ -285,7 +285,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.name}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>{s.username}</td>
                 <td style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
-                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--background)', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem', fontWeight: 'bold' }} onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
+                  <button style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--neon-fuchsia)', color: 'var(--foreground)', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem', fontWeight: 'bold' }} onClick={() => router.push(`/dashboard/profesor/alumno/${s.id}`)}>Ver Perfil</button>
                   <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem' }} onClick={() => handleOpenEdit(s)}>Editar</button>
                   <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: 'var(--neon-blue)', border: '1px solid var(--neon-blue)', borderRadius: '0.5rem', cursor: 'pointer', marginRight: '0.5rem' }} onClick={() => handleReset(s.id)}>Resetear Formulario</button>
                   <button style={{ padding: '0.5rem 1rem', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '0.5rem', cursor: 'pointer' }} onClick={() => handleDelete(s.id)}>Eliminar</button>
