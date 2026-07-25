@@ -474,7 +474,6 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
                               </div>
 
                               <div style={{ width: '2rem', textAlign: 'center' }}>
-                              <div style={{ textAlign: 'center' }}>
                                 <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>×</button>
                               </div>
                             </div>
