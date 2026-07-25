@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { query } from '@/lib/db';
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'PROFESSOR') {
@@ -41,7 +41,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: any) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || (session.user as any).role !== 'PROFESSOR') {
