@@ -10,7 +10,7 @@ export async function PUT(request: Request, { params }: any) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const id = params.id;
+    const { id } = await params;
     const { name, description, variation, media } = await request.json();
 
     // Actualizar datos básicos
@@ -48,7 +48,7 @@ export async function DELETE(request: Request, { params }: any) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const id = params.id;
+    const { id } = await params;
 
     // Se intentará borrar. Si el ejercicio está asignado a un alumno, el ON DELETE RESTRICT fallará con código 23503.
     await query('DELETE FROM exercises WHERE id = $1', [id]);
