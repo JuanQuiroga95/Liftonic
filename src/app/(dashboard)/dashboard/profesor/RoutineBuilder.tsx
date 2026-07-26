@@ -172,13 +172,25 @@ function ExerciseAutocomplete({
   );
 }
 
-export default function RoutineBuilder({ students, exercises, onRefreshExercises }: { students: any[], exercises: any[], onRefreshExercises: () => void }) {
-  const [studentId, setStudentId] = useState("");
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+export default function RoutineBuilder({ 
+  students, 
+  exercises, 
+  onRefreshExercises,
+  initialRoutine,
+  onCancelEdit
+}: { 
+  students: any[], 
+  exercises: any[], 
+  onRefreshExercises: () => void,
+  initialRoutine?: any,
+  onCancelEdit?: () => void
+}) {
+  const [studentId, setStudentId] = useState(initialRoutine?.student_id || "");
+  const [title, setTitle] = useState(initialRoutine?.title || "");
+  const [startDate, setStartDate] = useState(initialRoutine?.start_date ? new Date(initialRoutine.start_date).toISOString().split('T')[0] : "");
+  const [endDate, setEndDate] = useState(initialRoutine?.end_date ? new Date(initialRoutine.end_date).toISOString().split('T')[0] : "");
   
-  const [weeks, setWeeks] = useState<RoutineWeek[]>([
+  const [weeks, setWeeks] = useState<RoutineWeek[]>(initialRoutine?.weeks || [
     { id: uuidv4(), week_number: 1, days: [] }
   ]);
 
@@ -377,17 +389,25 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
 
     setSaving(true);
     try {
-      const res = await fetch("/api/profesor/routines", {
-        method: "POST",
+      const isEditing = !!initialRoutine?.id;
+      const url = isEditing ? `/api/profesor/routines/${initialRoutine.id}` : "/api/profesor/routines";
+      const method = isEditing ? "PUT" : "POST";
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ student_id: studentId, title, start_date: startDate, end_date: endDate, weeks }),
       });
       if (res.ok) {
-        alert("Rutina guardada y asignada exitosamente.");
-        // Reset form
-        setTitle(""); setStudentId(""); setWeeks([{ id: uuidv4(), week_number: 1, days: [] }]);
+        alert(isEditing ? "Rutina actualizada exitosamente." : "Rutina guardada y asignada exitosamente.");
+        if (isEditing && onCancelEdit) {
+          onCancelEdit();
+        } else if (!isEditing) {
+          setTitle(""); setStudentId(""); setWeeks([{ id: uuidv4(), week_number: 1, days: [] }]);
+        }
       } else {
-        alert("Error al guardar la rutina.");
+        const errorData = await res.json();
+        alert(errorData.error || "Error al guardar la rutina.");
       }
     } catch (err) {
       alert("Error de conexión");
@@ -519,9 +539,16 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button className="btn-ghost" onClick={addWeek}>+ Agregar Semana</button>
-        <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>
-          {saving ? 'Guardando Rutina...' : 'Guardar y Finalizar Rutina'}
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          {initialRoutine && onCancelEdit && (
+            <button className="btn-ghost" onClick={onCancelEdit} disabled={saving} style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>
+              Cancelar Edición
+            </button>
+          )}
+          <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>
+            {saving ? 'Guardando...' : (initialRoutine ? 'Actualizar Rutina' : 'Guardar y Finalizar Rutina')}
+          </button>
+        </div>
       </div>
 
     </div>

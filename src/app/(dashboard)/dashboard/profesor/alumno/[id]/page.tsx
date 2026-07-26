@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import RoutineBuilder from "../../RoutineBuilder";
 
 export default function StudentDetailView() {
   const router = useRouter();
@@ -26,6 +27,19 @@ export default function StudentDetailView() {
   // Progress and Metrics
   const [progress, setProgress] = useState<any>(null);
   const [metrics, setMetrics] = useState<any[]>([]);
+
+  const [exercises, setExercises] = useState<any[]>([]);
+  const [isEditingRoutine, setIsEditingRoutine] = useState(false);
+
+  const fetchEjercicios = () => {
+    fetch("/api/profesor/exercises")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setExercises(data);
+        else setExercises([]);
+      })
+      .catch(() => setExercises([]));
+  };
 
   const handleRequestAnamnesis = async () => {
     if (!confirm("¿Solicitar que el alumno complete una nueva encuesta de anamnesis? Esto ocultará su rutina hasta que lo haga.")) return;
@@ -151,7 +165,10 @@ export default function StudentDetailView() {
       .then(data => {
         if (!data.error) setMetrics(data);
       });
-  }, [id, params.id]);
+      
+    // Fetch Exercises (needed for RoutineBuilder)
+    fetchEjercicios();
+  }, [id, params.id, isEditingRoutine]);
 
   const activeWeek = routine?.weeks?.[activeWeekIndex];
   
@@ -206,6 +223,16 @@ export default function StudentDetailView() {
         <div>
           {!routine ? (
             <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Este alumno aún no tiene una rutina activa asignada.</p>
+          ) : isEditingRoutine ? (
+            <div style={{ marginTop: '1rem' }}>
+              <RoutineBuilder 
+                students={[student]} 
+                exercises={exercises} 
+                onRefreshExercises={fetchEjercicios} 
+                initialRoutine={routine}
+                onCancelEdit={() => setIsEditingRoutine(false)}
+              />
+            </div>
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -213,13 +240,21 @@ export default function StudentDetailView() {
                   <h2 style={{ margin: 0, color: 'var(--neon-pink)', fontSize: '1.25rem' }}>{routine.title}</h2>
                   <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{routine.weeks?.length} sem. Creado: {new Date(routine.start_date).toLocaleDateString()}</span>
                 </div>
-                <button 
-                  className="btn-danger"
-                  onClick={handleDeleteRoutine} 
-                  disabled={deletingRoutine}
-                >
-                  {deletingRoutine ? 'Eliminando...' : 'Eliminar Rutina'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    className="btn-outline-blue"
+                    onClick={() => setIsEditingRoutine(true)}
+                  >
+                    Editar Rutina
+                  </button>
+                  <button 
+                    className="btn-danger"
+                    onClick={handleDeleteRoutine} 
+                    disabled={deletingRoutine}
+                  >
+                    {deletingRoutine ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </div>
               </div>
 
               {/* Week Selector */}
