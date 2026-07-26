@@ -188,6 +188,30 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
     setWeeks([...weeks, { id: uuidv4(), week_number: weeks.length + 1, days: [] }]);
   };
 
+  const duplicateWeek = (weekToCopyId: string) => {
+    const weekToCopy = weeks.find(w => w.id === weekToCopyId);
+    if (!weekToCopy) return;
+
+    const newWeek: RoutineWeek = {
+      id: uuidv4(),
+      week_number: weeks.length + 1,
+      days: weekToCopy.days.map(day => ({
+        ...day,
+        id: uuidv4(),
+        exercises: day.exercises.map(ex => ({
+          ...ex,
+          id: uuidv4(),
+          sets: ex.sets.map(set => ({
+            ...set,
+            id: uuidv4()
+          }))
+        }))
+      }))
+    };
+
+    setWeeks([...weeks, newWeek]);
+  };
+
   const addDay = (weekId: string) => {
     setWeeks(weeks.map(w => {
       if (w.id === weekId) {
@@ -404,7 +428,10 @@ export default function RoutineBuilder({ students, exercises, onRefreshExercises
           <div key={week.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ color: 'var(--neon-pink)', margin: 0 }}>Semana {wIndex + 1}</h3>
-              <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
+                <button className="btn-ghost" onClick={() => duplicateWeek(week.id)} style={{ color: 'var(--foreground)' }} title="Duplicar esta semana al final">Duplicar Semana</button>
+              </div>
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem' }}>
