@@ -177,6 +177,8 @@ function RoutineViewer() {
   const [setWeights, setSetWeights] = useState<Record<string, number>>({});
   const [showConfetti, setShowConfetti] = useState(false);
   const [prEvent, setPrEvent] = useState<{ exercise: string, weight: number } | null>(null);
+  const [celebrationEvent, setCelebrationEvent] = useState<{ trainedDays: number } | null>(null);
+  const [savingWorkout, setSavingWorkout] = useState(false);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -238,6 +240,41 @@ function RoutineViewer() {
     setSetWeights(prev => ({ ...prev, [setId]: value }));
   };
 
+  const handleFinishWorkout = async (day: any) => {
+    setSavingWorkout(true);
+    try {
+      const exercises = day.exercises.map((ex: any) => {
+        let maxWeight = 0;
+        ex.sets.forEach((set: any) => {
+          if (completedSets[set.id]) {
+            const w = setWeights[set.id] || set.weight || 0;
+            if (w > maxWeight) maxWeight = w;
+          }
+        });
+        return { id: ex.id, weight: maxWeight };
+      });
+
+      const res = await fetch('/api/alumno/routine/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exercises })
+      });
+
+      if (res.ok) {
+        const newProgress = await fetch('/api/alumno/progress').then(r => r.json());
+        setCelebrationEvent({ trainedDays: newProgress.trainedDays });
+        setShowConfetti(true);
+      } else {
+        alert('Hubo un error al guardar tu entrenamiento.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error de conexión.');
+    } finally {
+      setSavingWorkout(false);
+    }
+  };
+
   const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const todayName = daysOfWeek[new Date().getDay()];
   
@@ -288,6 +325,42 @@ function RoutineViewer() {
               <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💪🔥</div>
               <h2 style={{ color: 'var(--foreground)', margin: 0, fontSize: '1.75rem', textTransform: 'uppercase' }}>¡NUEVO RÉCORD!</h2>
               <p style={{ color: 'var(--neon-pink)', fontSize: '1.25rem', fontWeight: 'bold', marginTop: '0.5rem' }}>{prEvent.weight} kg en {prEvent.exercise}</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Celebración de Entrenamiento Terminado */}
+      <AnimatePresence>
+        {celebrationEvent && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, pointerEvents: 'auto', backgroundColor: 'rgba(0,0,0,0.6)' }}>
+            <motion.div 
+              initial={{ scale: 0, opacity: 0 }} 
+              animate={{ scale: [1, 1.1, 1], opacity: 1 }} 
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              style={{ 
+                backgroundColor: 'var(--surface)', padding: '3rem 2rem', borderRadius: '1rem', 
+                border: '2px solid var(--neon-green)', boxShadow: '0 0 50px rgba(0, 255, 136, 0.4)', textAlign: 'center',
+                minWidth: '300px'
+              }}
+            >
+              <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>🏆</div>
+              <h2 style={{ color: 'var(--foreground)', margin: 0, fontSize: '2rem', textTransform: 'uppercase' }}>¡FELICIDADES!</h2>
+              <p style={{ color: 'var(--foreground-muted)', fontSize: '1.1rem', marginTop: '1rem', marginBottom: '2rem' }}>
+                Entrenamiento guardado con éxito.
+              </p>
+              <div style={{ backgroundColor: 'rgba(0, 255, 136, 0.1)', padding: '1.5rem', borderRadius: '1rem', border: '1px dashed var(--neon-green)' }}>
+                <span style={{ fontSize: '1.5rem', color: 'var(--neon-green)', fontWeight: '900' }}>{celebrationEvent.trainedDays}</span>
+                <div style={{ color: 'var(--foreground)', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.875rem', marginTop: '0.5rem' }}>Días Entrenados Total</div>
+              </div>
+              <button 
+                className="btn-primary" 
+                onClick={() => { setCelebrationEvent(null); setShowConfetti(false); window.location.reload(); }}
+                style={{ marginTop: '2rem', width: '100%', padding: '1rem', backgroundColor: 'var(--neon-green)', color: '#000', fontWeight: 'bold', border: 'none' }}
+              >
+                Seguir Rompiéndola
+              </button>
             </motion.div>
           </div>
         )}
@@ -455,8 +528,15 @@ function RoutineViewer() {
                     style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--neon-green)', backgroundColor: 'rgba(0, 255, 136, 0.05)', textAlign: 'center' }}
                   >
                     <h3 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0' }}>¡Entrenamiento Completado! ✅</h3>
-                    <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1rem 0' }}>Has levantado un aproximado de <strong>{getDayTotalKg(day)} kg</strong> en total en este día.</p>
-                    <button className="btn-primary" style={{ backgroundColor: 'var(--neon-green)', color: 'var(--background)', fontWeight: 'bold', padding: '1rem 2rem', boxShadow: '0 0 15px rgba(0,255,136,0.4)', border: 'none', width: '100%' }} onClick={() => alert('¡Rutina Guardada exitosamente!')}>Guardar Entrenamiento</button>
+                    <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1.5rem 0' }}>Has levantado un aproximado de <strong>{getDayTotalKg(day)} kg</strong> en total en este día.</p>
+                    <button 
+                      className="btn-primary" 
+                      disabled={savingWorkout}
+                      style={{ backgroundColor: 'var(--neon-green)', color: '#000', fontWeight: '900', padding: '1rem 2rem', boxShadow: '0 0 20px rgba(0,255,136,0.6)', border: 'none', width: '100%', textTransform: 'uppercase', fontSize: '1.1rem' }} 
+                      onClick={() => handleFinishWorkout(day)}
+                    >
+                      {savingWorkout ? 'Guardando...' : 'Terminar Entrenamiento'}
+                    </button>
                   </motion.div>
                 )}
               </div>
