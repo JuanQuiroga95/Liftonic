@@ -632,7 +632,12 @@ export default function RoutineBuilder({
             </div>
           );
         })}
+        </div>
+        )}
       </div>
+    );
+  })}
+</div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <button className="btn-ghost" onClick={addWeek}>+ Agregar Semana</button>
