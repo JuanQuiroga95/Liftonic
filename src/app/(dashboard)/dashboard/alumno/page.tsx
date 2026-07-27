@@ -298,6 +298,11 @@ function RoutineViewer() {
     return allSets.every((s: any) => completedSets[s.id]);
   };
 
+  const isDayAlreadySaved = (day: any) => {
+    if (!day || !day.exercises) return false;
+    return day.exercises.some((ex: any) => ex.actual_weight !== null && ex.actual_weight !== undefined);
+  };
+
   const getDayTotalKg = (day: any) => {
     if (!day || !day.exercises) return 0;
     const allSets = day.exercises.flatMap((e: any) => e.sets);
@@ -404,7 +409,7 @@ function RoutineViewer() {
             <div key={day.id} style={{ backgroundColor: 'var(--background)', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
               <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--surface-hover)' }}>
                 <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', fontSize: '1.2rem' }}>
-                  {isDayCompleted(day) ? '✅' : '💪'}
+                  {isDayAlreadySaved(day) || isDayCompleted(day) ? '✅' : '💪'}
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{day.day_name}</h3>
@@ -413,12 +418,20 @@ function RoutineViewer() {
               </div>
 
               <div style={{ padding: '1rem' }}>
-                <motion.div 
-                  initial="hidden" animate="show" 
-                  variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}
-                >
-                  {day.exercises?.map((ex: any, exIdx: number) => {
+                {isDayAlreadySaved(day) ? (
+                  <div style={{ backgroundColor: 'rgba(0, 255, 136, 0.1)', border: '1px solid var(--neon-green)', padding: '2rem', borderRadius: '1rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                    <h4 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0', fontSize: '1.25rem', textTransform: 'uppercase' }}>Entrenamiento Listo</h4>
+                    <p style={{ color: 'var(--foreground-muted)', margin: 0, fontSize: '1rem' }}>Este día ya fue guardado en tu progreso histórico.</p>
+                  </div>
+                ) : (
+                  <>
+                    <motion.div 
+                      initial="hidden" animate="show" 
+                      variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+                      style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}
+                    >
+                      {day.exercises?.map((ex: any, exIdx: number) => {
                     const isExpanded = expandedExercises[ex.id];
                     const color = getPillColor(exIdx);
 
@@ -538,6 +551,8 @@ function RoutineViewer() {
                       {savingWorkout ? 'Guardando...' : 'Terminar Entrenamiento'}
                     </button>
                   </motion.div>
+                )}
+                  </>
                 )}
               </div>
             </div>
