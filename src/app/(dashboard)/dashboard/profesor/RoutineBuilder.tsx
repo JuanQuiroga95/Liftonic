@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 type ExerciseSet = {
   id: string;
-  reps: number;
+  reps: string | number;
   rpe: number;
   weight: number;
   type: string;
@@ -252,7 +252,7 @@ export default function RoutineBuilder({
                 ...d, exercises: [...d.exercises, {
                   id: uuidv4(),
                   exercise_id: exercises.length > 0 ? exercises[0].id : "",
-                  sets: [{ id: uuidv4(), reps: 1, rpe: 8, weight: 0, type: "Top" }]
+                  sets: [{ id: uuidv4(), reps: "10", rpe: 8, weight: 0, type: "Top" }]
                 }]
               };
             }
@@ -296,7 +296,7 @@ export default function RoutineBuilder({
                       ...e,
                       sets: [...(e.sets || []), { 
                         id: uuidv4(), 
-                        reps: lastSet ? lastSet.reps : 1, 
+                        reps: lastSet ? lastSet.reps : "10", 
                         rpe: lastSet ? lastSet.rpe : 8, 
                         weight: lastSet ? lastSet.weight : 0, 
                         type: "Back" 
@@ -496,7 +496,7 @@ export default function RoutineBuilder({
                             <div key={set.id} className="routine-grid-row" style={{ borderTop: '1px solid var(--border)' }}>
                               <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--foreground-muted)', fontWeight: 'bold' }}>{sIndex + 1}</div>
                               <div>
-                                <input type="number" placeholder="reps" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', parseInt(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                <input type="text" placeholder="Ej: 10-12, Al fallo, 30s" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
                               <div>
                                 <input type="number" placeholder="rpe" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
