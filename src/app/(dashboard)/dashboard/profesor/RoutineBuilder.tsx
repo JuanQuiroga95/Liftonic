@@ -233,6 +233,21 @@ export default function RoutineBuilder({
     }));
   };
 
+  const removeDay = (weekId: string, dayId: string) => {
+    // Removed confirm() as it can get blocked by browsers ("Prevent dialogs")
+    setWeeks(weeks.map(w => {
+      if (w.id === weekId) {
+        return { ...w, days: w.days.filter(d => d.id !== dayId) };
+      }
+      return w;
+    }));
+  };
+
+  const removeWeek = (weekId: string) => {
+    // Removed confirm() as it can get blocked by browsers
+    setWeeks(weeks.filter(w => w.id !== weekId));
+  };
+
   const updateDayName = (weekId: string, dayId: string, name: string) => {
     setWeeks(weeks.map(w => {
       if (w.id === weekId) {
@@ -454,18 +469,22 @@ export default function RoutineBuilder({
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
                 <button className="btn-ghost" onClick={() => duplicateWeek(week.id)} style={{ color: 'var(--foreground)' }} title="Duplicar esta semana al final">Duplicar Semana</button>
+                <button className="btn-ghost" onClick={() => removeWeek(week.id)} style={{ color: '#ff4d4d' }} title="Eliminar Semana">Borrar Semana</button>
               </div>
             </div>
             
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', paddingBottom: '1rem' }}>
               {week.days.length === 0 && <p style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>No hay días en esta semana. Agrega uno.</p>}
               {week.days.map((day) => (
-                <div key={day.id} style={{ flex: '1 1 350px', minWidth: '350px', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
-                  <input 
-                    value={day.day_name} 
-                    onChange={e => updateDayName(week.id, day.id, e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', fontWeight: 'bold' }} 
-                  />
+                <div key={day.id} style={{ flex: '1 1 100%', minWidth: 'min(320px, 100%)', maxWidth: '100%', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <input 
+                      value={day.day_name} 
+                      onChange={e => updateDayName(week.id, day.id, e.target.value)}
+                      style={{ flex: 1, padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', fontWeight: 'bold' }} 
+                    />
+                    <button className="btn-ghost" onClick={() => removeDay(week.id, day.id)} style={{ color: '#ff4d4d', padding: '0.5rem' }} title="Eliminar Día">🗑️</button>
+                  </div>
                   
                   {/* Ejercicios del día */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
@@ -485,40 +504,42 @@ export default function RoutineBuilder({
 
                         {/* Tabla de Series */}
                         <div style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                          <div className="routine-grid-header" style={{ padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                          <div className="routine-grid-header" style={{ padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 40px' }}>
                             <div style={{ textAlign: 'center' }}>#</div>
                             <div style={{ textAlign: 'center' }}>REPS</div>
-                            <div style={{ textAlign: 'center' }}>PROF. RPE</div>
-                            <div style={{ textAlign: 'center' }}>ALU. RPE</div>
+                            <div style={{ textAlign: 'center' }}>RPE</div>
                             <div style={{ textAlign: 'center' }}>KG Obj.</div>
                             <div style={{ textAlign: 'center' }}>TIPO</div>
                             <div style={{ textAlign: 'center' }}></div>
                           </div>
                           
                           {ex.sets?.map((set: any, sIndex: number) => (
-                            <div key={set.id} className="routine-grid-row" style={{ borderTop: '1px solid var(--border)' }}>
-                              <div style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--foreground-muted)', fontWeight: 'bold' }}>{sIndex + 1}</div>
-                              <div>
-                                <input type="text" placeholder="Ej: 10-12, Al fallo, 30s" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                            <div key={set.id} className="routine-grid-row" style={{ borderTop: '1px solid var(--border)', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 40px' }}>
+                              <div style={{ textAlign: 'center', fontSize: '1rem', color: 'var(--foreground-muted)', fontWeight: 'bold' }}>
+                                <span className="mobile-label">Serie </span>{sIndex + 1}
                               </div>
-                              <div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                <span className="mobile-label">Reps</span>
+                                <input type="text" placeholder="Ej: 10-12, Al fallo" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                <span className="mobile-label">RPE</span>
                                 <input type="number" placeholder="rpe" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
-                              <div>
-                                <input type="text" disabled placeholder="-" style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px dashed var(--border)', borderRadius: '0.25rem', color: 'var(--foreground-muted)', textAlign: 'center', cursor: 'not-allowed' }} title="El alumno llenará esto" />
-                              </div>
-                              <div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                <span className="mobile-label">KG Obj.</span>
                                 <input type="number" placeholder="kg" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
                               </div>
-                              <div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                <span className="mobile-label">Tipo</span>
                                 <select value={set.type} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'type', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>
                                   <option value="Normal">Normal</option>
                                   <option value="Top" style={{ color: 'var(--neon-pink)' }}>Top</option>
                                   <option value="Back" style={{ color: '#f59e0b' }}>Back</option>
                                 </select>
                               </div>
-                              <div style={{ textAlign: 'center' }}>
-                                <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>×</button>
+                              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.5rem', width: '100%' }}>Eliminar Serie</button>
                               </div>
                             </div>
                           ))}

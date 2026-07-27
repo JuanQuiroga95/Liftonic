@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AnamnesisForm from "@/components/forms/AnamnesisForm";
 import LogoutButton from "@/components/ui/LogoutButton";
+import Confetti from 'react-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AlumnoDashboard() {
   const [anamnesis, setAnamnesis] = useState<any>(null);
@@ -10,14 +12,17 @@ export default function AlumnoDashboard() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("entreno");
+  const [progress, setProgress] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
       fetch('/api/alumno/anamnesis').then(r => r.json()),
-      fetch('/api/alumno/profile').then(r => r.json())
-    ]).then(([anamnesisData, profileData]) => {
+      fetch('/api/alumno/profile').then(r => r.json()),
+      fetch('/api/alumno/progress').then(r => r.json())
+    ]).then(([anamnesisData, profileData, progressData]) => {
       setAnamnesis(anamnesisData);
       setProfile(profileData);
+      setProgress(progressData);
       setLoading(false);
     });
   }, []);
@@ -117,15 +122,39 @@ export default function AlumnoDashboard() {
       {/* Main Content Area */}
       <div className="pad-main" style={{ flex: 1, maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
         
-        {/* Header con Saludo */}
+        {/* Header con Saludo y Racha */}
         {profile && (
-          <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ color: 'var(--foreground)', fontSize: '2.5rem', margin: '0 0 0.5rem 0' }}>
-              ¡Hola, {profile.name.split(' ')[0]}! 👋
-            </h1>
-            <p style={{ color: 'var(--foreground-muted)', fontSize: '1.1rem', margin: 0 }}>
-              Bienvenido de nuevo a tu espacio de entrenamiento.
-            </p>
+          <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            >
+              <h1 style={{ color: 'var(--foreground)', fontSize: '2.5rem', margin: '0 0 0.5rem 0' }}>
+                ¡Hola, {profile.name.split(' ')[0]}! 👋
+              </h1>
+              <p style={{ color: 'var(--foreground-muted)', fontSize: '1.1rem', margin: 0 }}>
+                {progress?.streak > 0 
+                  ? "¡Qué bueno verte! Sigamos manteniendo esa racha." 
+                  : "Bienvenido de nuevo a tu espacio de entrenamiento."}
+              </p>
+            </motion.div>
+            
+            {progress && (
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                  backgroundColor: progress.streak >= 4 ? 'rgba(0, 229, 255, 0.1)' : 'var(--surface-hover)', 
+                  padding: '0.75rem 1.25rem', borderRadius: '2rem', 
+                  border: `1px solid ${progress.streak >= 4 ? 'var(--neon-blue)' : 'var(--border)'}` 
+                }}
+              >
+                <span style={{ fontSize: '1.5rem' }}>{progress.streak >= 4 ? '🔥' : '🌱'}</span>
+                <div>
+                  <div style={{ fontWeight: 'bold', color: progress.streak >= 4 ? 'var(--neon-blue)' : 'var(--foreground)', lineHeight: 1 }}>{progress.streak || 0} Semanas</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Racha actual</div>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
@@ -143,8 +172,18 @@ function RoutineViewer() {
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [infoModal, setInfoModal] = useState<any>(null);
 
+  // Gamification States
+  const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
+  const [setWeights, setSetWeights] = useState<Record<string, number>>({});
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [prEvent, setPrEvent] = useState<{ exercise: string, weight: number } | null>(null);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
   useEffect(() => {
     fetch('/api/alumno/routine').then(r => r.json()).then(setRoutine);
+    fetch('/api/alumno/metrics').then(r => r.json()).then(data => setMetrics(data || []));
+    setDimensions({ width: window.innerWidth, height: window.innerHeight });
   }, []);
 
   if (!routine || routine.error) return <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Tu profesor aún no te ha asignado una rutina.</p>;
@@ -175,22 +214,83 @@ function RoutineViewer() {
     return summary.length > 20 ? `${sets.length} series` : summary;
   };
 
+  const handleCheckSet = (ex: any, set: any, isChecked: boolean) => {
+    setCompletedSets(prev => ({ ...prev, [set.id]: isChecked }));
+    
+    if (isChecked) {
+      const currentWeight = setWeights[set.id] || set.weight;
+      const exMetrics = metrics.find(m => m.exercise === ex.exercise_name);
+      const prevMax = exMetrics?.pr || set.weight; 
+      
+      // Check PR condition (must be > prevMax and at least realistic weight > 0)
+      if (currentWeight > prevMax && currentWeight > 0) {
+        setPrEvent({ exercise: ex.exercise_name, weight: currentWeight });
+        setShowConfetti(true);
+        setTimeout(() => {
+          setShowConfetti(false);
+          setPrEvent(null);
+        }, 5000);
+      }
+    }
+  };
+
+  const updateSetWeight = (setId: string, value: number) => {
+    setSetWeights(prev => ({ ...prev, [setId]: value }));
+  };
+
   const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const todayName = daysOfWeek[new Date().getDay()];
   
   let todayMessage = "😴 Hoy descansamos";
+  let todayRoutine: any = null;
   if (activeWeek && activeWeek.days) {
-    const todayRoutine = activeWeek.days.find((d: any) => d.day_name.toLowerCase().includes(todayName.toLowerCase()));
+    todayRoutine = activeWeek.days.find((d: any) => d.day_name.toLowerCase().includes(todayName.toLowerCase()));
     if (todayRoutine) {
       todayMessage = `💪 Hoy tenés gym: ${todayRoutine.day_name}`;
     } else if (activeWeek.days.length > 0) {
-      // Fallback si los dias no se llaman lunes/martes sino dia 1, dia 2
-      todayMessage = `📅 Próximo entreno en tu rutina: ${activeWeek.days[0].day_name}`;
+      todayRoutine = activeWeek.days[0]; // FIX: Assign fallback todayRoutine so it doesn't break completion
+      todayMessage = `📅 Próximo entreno en tu rutina: ${todayRoutine.day_name}`;
     }
   }
 
+  // Helper to check if a specific day is fully completed
+  const isDayCompleted = (day: any) => {
+    if (!day || !day.exercises || day.exercises.length === 0) return false;
+    const allSets = day.exercises.flatMap((e: any) => e.sets);
+    if (allSets.length === 0) return false;
+    return allSets.every((s: any) => completedSets[s.id]);
+  };
+
+  const getDayTotalKg = (day: any) => {
+    if (!day || !day.exercises) return 0;
+    const allSets = day.exercises.flatMap((e: any) => e.sets);
+    return allSets.reduce((sum: number, s: any) => sum + (setWeights[s.id] || s.weight || 0), 0);
+  };
+
   return (
     <div style={{ paddingBottom: '4rem' }}>
+      {showConfetti && <Confetti width={dimensions.width} height={dimensions.height} recycle={false} numberOfPieces={500} />}
+      
+      <AnimatePresence>
+        {prEvent && (
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }} 
+            animate={{ scale: [1, 1.2, 1], opacity: 1 }} 
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{ 
+              position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 
+              zIndex: 1000, backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', 
+              border: '2px solid var(--neon-pink)', boxShadow: '0 0 20px var(--neon-pink)', textAlign: 'center' 
+            }}
+          >
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💪🔥</div>
+            <h2 style={{ color: 'var(--foreground)', margin: 0 }}>¡NUEVO RÉCORD!</h2>
+            <p style={{ color: 'var(--neon-pink)', fontSize: '1.25rem', fontWeight: 'bold' }}>{prEvent.weight} kg en {prEvent.exercise}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="mobile-wrap" style={{ justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div>
           <h2 style={{ margin: 0, color: 'var(--foreground)', fontSize: '1.5rem' }}>{routine.title}</h2>
@@ -228,8 +328,8 @@ function RoutineViewer() {
           {activeWeek.days?.map((day: any) => (
             <div key={day.id} style={{ backgroundColor: 'var(--background)', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
               <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--surface-hover)' }}>
-                <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
-                  -
+                <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', fontSize: '1.2rem' }}>
+                  {isDayCompleted(day) ? '✅' : '💪'}
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{day.day_name}</h3>
@@ -238,7 +338,11 @@ function RoutineViewer() {
               </div>
 
               <div style={{ padding: '1rem' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <motion.div 
+                  initial="hidden" animate="show" 
+                  variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}
+                >
                   {day.exercises?.map((ex: any, exIdx: number) => {
                     const isExpanded = expandedExercises[ex.id];
                     const color = getPillColor(exIdx);
@@ -246,7 +350,7 @@ function RoutineViewer() {
                     if (!isExpanded) {
                       // Pill view
                       return (
-                        <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <motion.div key={ex.id} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <button 
                             onClick={() => toggleExercise(ex.id)}
                             style={{ 
@@ -262,13 +366,13 @@ function RoutineViewer() {
                           <button className="btn-ghost" onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', padding: 0 }}>
                             ℹ️
                           </button>
-                        </div>
+                        </motion.div>
                       );
                     }
 
                     // Expanded Table View
                     return (
-                      <div key={ex.id} style={{ width: '100%', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', padding: '1rem', marginTop: '0.5rem' }}>
+                      <motion.div key={ex.id} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} style={{ width: '100%', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', padding: '1rem', marginTop: '0.5rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
@@ -291,27 +395,68 @@ function RoutineViewer() {
                           </div>
                           
                           {ex.sets?.map((set: any, sIdx: number) => (
-                            <div key={set.id} className="routine-grid-row" style={{ backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', transition: 'background-color 0.2s', marginBottom: '0.5rem' }}>
-                              <div style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem', fontWeight: 'bold' }}>{sIdx + 1}</div>
-                              <div>
-                                <input type="number" placeholder="kg" defaultValue={set.weight} style={{ width: '100%', maxWidth: '80px', padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
+                            <div key={set.id} className="routine-grid-row" style={{ backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: `1px solid ${completedSets[set.id] ? 'var(--neon-green)' : 'var(--border)'}`, transition: 'all 0.3s', marginBottom: '0.5rem', position: 'relative', overflow: 'hidden' }}>
+                              {completedSets[set.id] && <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: 'var(--neon-green)' }}></div>}
+                              
+                              <div style={{ textAlign: 'center', color: completedSets[set.id] ? 'var(--neon-green)' : 'var(--foreground-muted)', fontSize: '1rem', fontWeight: 'bold' }}>
+                                <span className="mobile-label">Serie </span>{sIdx + 1}
                               </div>
-                              <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '0.9rem' }}>{set.reps}</div>
-                              <div style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)', fontSize: '0.9rem' }}>{set.rpe}</div>
-                              <div>
-                                <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '60px', padding: '0.4rem', backgroundColor: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '0.875rem' }} />
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span className="mobile-label">Peso (kg)</span>
+                                <input type="number" placeholder="kg" value={setWeights[set.id] ?? set.weight} onChange={(e) => updateSetWeight(set.id, parseFloat(e.target.value))} style={{ width: '100%', maxWidth: '80px', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} />
                               </div>
-                              <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '600', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <input type="checkbox" style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer', accentColor: color.border, borderRadius: '0.25rem' }} />
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span className="mobile-label">Reps</span>
+                                <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{set.reps}</div>
+                              </div>
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span className="mobile-label">RPE Prof.</span>
+                                <div style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)', fontSize: '1rem' }}>{set.rpe}</div>
+                              </div>
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span className="mobile-label">Tu RPE</span>
+                                <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '60px', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} />
+                              </div>
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span className="mobile-label">Tipo</span>
+                                <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '800', textTransform: 'uppercase', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--neon-blue)') }}>{set.type}</div>
+                              </div>
+                              
+                              <div style={{ display: 'flex', justifyContent: 'center', padding: '0.25rem' }}>
+                                <button 
+                                  onClick={() => handleCheckSet(ex, set, !completedSets[set.id])}
+                                  style={{ 
+                                    width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s',
+                                    backgroundColor: completedSets[set.id] ? 'rgba(0, 255, 136, 0.2)' : 'var(--surface-hover)',
+                                    color: completedSets[set.id] ? 'var(--neon-green)' : 'var(--foreground)'
+                                  }}
+                                >
+                                  {completedSets[set.id] ? '✓ Lista' : 'Completar'}
+                                </button>
                               </div>
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
-                </div>
+                </motion.div>
+                
+                {isDayCompleted(day) && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--neon-green)', backgroundColor: 'rgba(0, 255, 136, 0.05)', textAlign: 'center' }}
+                  >
+                    <h3 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0' }}>¡Entrenamiento Completado! ✅</h3>
+                    <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1rem 0' }}>Has levantado un aproximado de <strong>{getDayTotalKg(day)} kg</strong> en total en este día.</p>
+                    <button className="btn-primary" style={{ backgroundColor: 'var(--neon-green)', color: 'var(--background)', fontWeight: 'bold', padding: '1rem 2rem', boxShadow: '0 0 15px rgba(0,255,136,0.4)', border: 'none', width: '100%' }} onClick={() => alert('¡Rutina Guardada exitosamente!')}>Guardar Entrenamiento</button>
+                  </motion.div>
+                )}
               </div>
             </div>
           ))}
