@@ -384,6 +384,9 @@ export default function RoutineBuilder({
     if (!studentId || !title || !startDate || !endDate) return alert("Completa la información general (Alumno, Título, Fechas).");
     
     // Validate all exercises have an ID
+    const hasEmptyDays = weeks.some(w => w.days.length === 0 || w.days.some(d => d.exercises.length === 0));
+    if (hasEmptyDays) return alert("Por favor, asegúrate de que cada semana tenga días y que cada día tenga al menos un ejercicio asignado.");
+
     const hasEmptyEx = weeks.some(w => w.days.some(d => d.exercises.some(e => !e.exercise_id)));
     if (hasEmptyEx) return alert("Todos los ejercicios deben estar asignados.");
 
@@ -446,9 +449,9 @@ export default function RoutineBuilder({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
         {weeks.map((week, wIndex) => (
           <div key={week.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
               <h3 style={{ color: 'var(--neon-pink)', margin: 0 }}>Semana {wIndex + 1}</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
                 <button className="btn-ghost" onClick={() => duplicateWeek(week.id)} style={{ color: 'var(--foreground)' }} title="Duplicar esta semana al final">Duplicar Semana</button>
               </div>
@@ -537,9 +540,9 @@ export default function RoutineBuilder({
         ))}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <button className="btn-ghost" onClick={addWeek}>+ Agregar Semana</button>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
           {initialRoutine && onCancelEdit && (
             <button className="btn-ghost" onClick={onCancelEdit} disabled={saving} style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>
               Cancelar Edición
