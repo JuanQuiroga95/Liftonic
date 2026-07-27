@@ -273,21 +273,23 @@ function RoutineViewer() {
       
       <AnimatePresence>
         {prEvent && (
-          <motion.div 
-            initial={{ scale: 0, opacity: 0 }} 
-            animate={{ scale: [1, 1.2, 1], opacity: 1 }} 
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ 
-              position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', 
-              zIndex: 1000, backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', 
-              border: '2px solid var(--neon-pink)', boxShadow: '0 0 20px var(--neon-pink)', textAlign: 'center' 
-            }}
-          >
-            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💪🔥</div>
-            <h2 style={{ color: 'var(--foreground)', margin: 0 }}>¡NUEVO RÉCORD!</h2>
-            <p style={{ color: 'var(--neon-pink)', fontSize: '1.25rem', fontWeight: 'bold' }}>{prEvent.weight} kg en {prEvent.exercise}</p>
-          </motion.div>
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, pointerEvents: 'none' }}>
+            <motion.div 
+              initial={{ scale: 0, opacity: 0 }} 
+              animate={{ scale: [1, 1.2, 1], opacity: 1 }} 
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              style={{ 
+                backgroundColor: 'var(--surface)', padding: '2.5rem', borderRadius: '1rem', 
+                border: '2px solid var(--neon-pink)', boxShadow: '0 0 40px rgba(255, 0, 128, 0.5)', textAlign: 'center',
+                minWidth: '280px'
+              }}
+            >
+              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>💪🔥</div>
+              <h2 style={{ color: 'var(--foreground)', margin: 0, fontSize: '1.75rem', textTransform: 'uppercase' }}>¡NUEVO RÉCORD!</h2>
+              <p style={{ color: 'var(--neon-pink)', fontSize: '1.25rem', fontWeight: 'bold', marginTop: '0.5rem' }}>{prEvent.weight} kg en {prEvent.exercise}</p>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
