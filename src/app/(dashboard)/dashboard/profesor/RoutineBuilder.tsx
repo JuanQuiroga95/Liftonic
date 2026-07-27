@@ -196,8 +196,41 @@ export default function RoutineBuilder({
 
   const [saving, setSaving] = useState(false);
 
+  // Accordion State
+  const [expandedWeeks, setExpandedWeeks] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    if (initialRoutine?.weeks) {
+      initialRoutine.weeks.forEach((w: any) => initialState[w.id] = true);
+    } else {
+      initialState[weeks[0].id] = true;
+    }
+    return initialState;
+  });
+  
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    if (initialRoutine?.weeks) {
+      initialRoutine.weeks.forEach((w: any) => w.days.forEach((d: any) => initialState[d.id] = true));
+    }
+    return initialState;
+  });
+
+  const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    if (initialRoutine?.weeks) {
+      initialRoutine.weeks.forEach((w: any) => w.days.forEach((d: any) => d.exercises.forEach((e: any) => initialState[e.id] = true)));
+    }
+    return initialState;
+  });
+
+  const toggleWeek = (id: string) => setExpandedWeeks(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleDay = (id: string) => setExpandedDays(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleExercise = (id: string) => setExpandedExercises(prev => ({ ...prev, [id]: !prev[id] }));
+
   const addWeek = () => {
-    setWeeks([...weeks, { id: uuidv4(), week_number: weeks.length + 1, days: [] }]);
+    const newId = uuidv4();
+    setWeeks([...weeks, { id: newId, week_number: weeks.length + 1, days: [] }]);
+    setExpandedWeeks(prev => ({ ...prev, [newId]: true }));
   };
 
   const duplicateWeek = (weekToCopyId: string) => {
@@ -222,15 +255,24 @@ export default function RoutineBuilder({
     };
 
     setWeeks([...weeks, newWeek]);
+    setExpandedWeeks(prev => ({ ...prev, [newWeek.id]: true }));
+    // Expand all nested elements in the duplicated week
+    newWeek.days.forEach(d => {
+      setExpandedDays(prev => ({ ...prev, [d.id]: true }));
+      d.exercises.forEach(e => setExpandedExercises(prev => ({ ...prev, [e.id]: true })));
+    });
   };
 
   const addDay = (weekId: string) => {
+    const newId = uuidv4();
     setWeeks(weeks.map(w => {
       if (w.id === weekId) {
-        return { ...w, days: [...w.days, { id: uuidv4(), day_name: "Nuevo Día", exercises: [] }] };
+        return { ...w, days: [...w.days, { id: newId, day_name: "Nuevo Día", exercises: [] }] };
       }
       return w;
     }));
+    setExpandedDays(prev => ({ ...prev, [newId]: true }));
+    setExpandedWeeks(prev => ({ ...prev, [weekId]: true }));
   };
 
   const removeDay = (weekId: string, dayId: string) => {
@@ -258,6 +300,7 @@ export default function RoutineBuilder({
   };
 
   const addExercise = (weekId: string, dayId: string) => {
+    const newId = uuidv4();
     setWeeks(weeks.map(w => {
       if (w.id === weekId) {
         return {
@@ -265,7 +308,7 @@ export default function RoutineBuilder({
             if (d.id === dayId) {
               return {
                 ...d, exercises: [...d.exercises, {
-                  id: uuidv4(),
+                  id: newId,
                   exercise_id: exercises.length > 0 ? exercises[0].id : "",
                   sets: [{ id: uuidv4(), reps: "10", rpe: 8, weight: 0, type: "Top" }]
                 }]
@@ -277,6 +320,8 @@ export default function RoutineBuilder({
       }
       return w;
     }));
+    setExpandedExercises(prev => ({ ...prev, [newId]: true }));
+    setExpandedDays(prev => ({ ...prev, [dayId]: true }));
   };
 
   const updateExercise = (weekId: string, dayId: string, exId: string, field: string, value: any) => {
@@ -462,103 +507,131 @@ export default function RoutineBuilder({
 
       {/* Constructor Visual */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
-        {weeks.map((week, wIndex) => (
-          <div key={week.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <h3 style={{ color: 'var(--neon-pink)', margin: 0 }}>Semana {wIndex + 1}</h3>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
-                <button className="btn-ghost" onClick={() => duplicateWeek(week.id)} style={{ color: 'var(--foreground)' }} title="Duplicar esta semana al final">Duplicar Semana</button>
-                <button className="btn-ghost" onClick={() => removeWeek(week.id)} style={{ color: '#ff4d4d' }} title="Eliminar Semana">Borrar Semana</button>
+        {weeks.map((week, wIndex) => {
+          const isWeekExpanded = expandedWeeks[week.id];
+          return (
+            <div key={week.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isWeekExpanded ? '1rem' : '0', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button onClick={() => toggleWeek(week.id)} style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', fontSize: '1.2rem', padding: '0 0.5rem' }}>
+                    {isWeekExpanded ? '▼' : '▶'}
+                  </button>
+                  <h3 style={{ color: 'var(--neon-pink)', margin: 0, cursor: 'pointer' }} onClick={() => toggleWeek(week.id)}>Semana {wIndex + 1}</h3>
+                  {!isWeekExpanded && <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem', marginLeft: '1rem' }}>{week.days.length} días</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button className="btn-outline-blue" onClick={() => addDay(week.id)}>+ Agregar Día</button>
+                  <button className="btn-ghost" onClick={() => duplicateWeek(week.id)} style={{ color: 'var(--foreground)' }} title="Duplicar esta semana al final">Duplicar Semana</button>
+                  <button className="btn-ghost" onClick={() => removeWeek(week.id)} style={{ color: '#ff4d4d' }} title="Eliminar Semana">Borrar Semana</button>
+                </div>
               </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', paddingBottom: '1rem' }}>
-              {week.days.length === 0 && <p style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>No hay días en esta semana. Agrega uno.</p>}
-              {week.days.map((day) => (
-                <div key={day.id} style={{ flex: '1 1 100%', minWidth: 'min(320px, 100%)', maxWidth: '100%', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', boxSizing: 'border-box' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                    <input 
-                      value={day.day_name} 
-                      onChange={e => updateDayName(week.id, day.id, e.target.value)}
-                      style={{ flex: 1, padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', fontWeight: 'bold' }} 
-                    />
-                    <button className="btn-ghost" onClick={() => removeDay(week.id, day.id)} style={{ color: '#ff4d4d', padding: '0.5rem' }} title="Eliminar Día">🗑️</button>
-                  </div>
-                  
-                  {/* Ejercicios del día */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
-                    {day.exercises.map((ex, eIndex) => (
-                      <div key={ex.id} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1}</span>
-                          <button className="btn-ghost" onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>X</button>
+              
+              {isWeekExpanded && (
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', paddingBottom: '1rem' }}>
+                  {week.days.length === 0 && <p style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>No hay días en esta semana. Agrega uno.</p>}
+                  {week.days.map((day) => {
+                    const isDayExpanded = expandedDays[day.id];
+                    return (
+                      <div key={day.id} style={{ flex: '1 1 100%', minWidth: 'min(320px, 100%)', maxWidth: '100%', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', boxSizing: 'border-box' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: isDayExpanded ? '1rem' : '0', alignItems: 'center' }}>
+                          <button onClick={() => toggleDay(day.id)} style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', fontSize: '1.2rem' }}>
+                            {isDayExpanded ? '▼' : '▶'}
+                          </button>
+                          <input 
+                            value={day.day_name} 
+                            onChange={e => updateDayName(week.id, day.id, e.target.value)}
+                            style={{ flex: 1, padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', fontWeight: 'bold' }} 
+                          />
+                          <button className="btn-ghost" onClick={() => removeDay(week.id, day.id)} style={{ color: '#ff4d4d', padding: '0.5rem' }} title="Eliminar Día">🗑️</button>
                         </div>
                         
-                        <ExerciseAutocomplete 
-                          exercises={exercises} 
-                          value={ex.exercise_id} 
-                          onChange={(id) => updateExercise(week.id, day.id, ex.id, 'exercise_id', id)}
-                          onRefreshExercises={onRefreshExercises}
-                        />
-
-                        {/* Tabla de Series */}
-                        <div style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                          <div className="routine-grid-header" style={{ padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 40px' }}>
-                            <div style={{ textAlign: 'center' }}>#</div>
-                            <div style={{ textAlign: 'center' }}>REPS</div>
-                            <div style={{ textAlign: 'center' }}>RPE</div>
-                            <div style={{ textAlign: 'center' }}>KG Obj.</div>
-                            <div style={{ textAlign: 'center' }}>TIPO</div>
-                            <div style={{ textAlign: 'center' }}></div>
+                        {isDayExpanded && (
+                          <>
+                            {/* Ejercicios del día */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
+                    {day.exercises.map((ex, eIndex) => {
+                      const isExExpanded = expandedExercises[ex.id];
+                      return (
+                        <div key={ex.id} style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--surface-hover)', borderRadius: '0.5rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => toggleExercise(ex.id)}>
+                              <button style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', fontSize: '1rem', padding: 0 }}>
+                                {isExExpanded ? '▼' : '▶'}
+                              </button>
+                              <span style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1} {!isExExpanded && `- ${ex.sets.length} series`}</span>
+                            </div>
+                            <button className="btn-ghost" onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>X</button>
                           </div>
                           
-                          {ex.sets?.map((set: any, sIndex: number) => (
-                            <div key={set.id} className="routine-grid-row" style={{ borderTop: '1px solid var(--border)', gridTemplateColumns: '40px 1.5fr 1fr 1fr 1.5fr 40px' }}>
-                              <div style={{ textAlign: 'center', fontSize: '1rem', color: 'var(--foreground-muted)', fontWeight: 'bold' }}>
-                                <span className="mobile-label">Serie </span>{sIndex + 1}
+                          {isExExpanded && (
+                            <>
+                              <ExerciseAutocomplete 
+                                exercises={exercises} 
+                                value={ex.exercise_id} 
+                                onChange={(id) => updateExercise(week.id, day.id, ex.id, 'exercise_id', id)}
+                                onRefreshExercises={onRefreshExercises}
+                              />
+
+                              {/* Tabla de Series */}
+                              <div style={{ marginTop: '1rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                <div className="builder-grid-header" style={{ padding: '0.5rem', backgroundColor: 'var(--surface-hover)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>
+                                  <div style={{ textAlign: 'center' }}>#</div>
+                                  <div style={{ textAlign: 'center' }}>REPS</div>
+                                  <div style={{ textAlign: 'center' }}>RPE</div>
+                                  <div style={{ textAlign: 'center' }}>KG Obj.</div>
+                                  <div style={{ textAlign: 'center' }}>TIPO</div>
+                                  <div style={{ textAlign: 'center' }}></div>
+                                </div>
+                                
+                                {ex.sets?.map((set: any, sIndex: number) => (
+                                  <div key={set.id} className="builder-grid-row" style={{ borderTop: '1px solid var(--border)' }}>
+                                    <div style={{ textAlign: 'center', fontSize: '1rem', color: 'var(--foreground-muted)', fontWeight: 'bold' }}>
+                                      <span className="mobile-label">Serie </span>{sIndex + 1}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                      <span className="mobile-label">Reps</span>
+                                      <input type="text" placeholder="Ej: 10-12, Al fallo" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                      <span className="mobile-label">RPE</span>
+                                      <input type="number" placeholder="rpe" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                      <span className="mobile-label">KG Obj.</span>
+                                      <input type="number" placeholder="kg" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                                      <span className="mobile-label">Tipo</span>
+                                      <select value={set.type} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'type', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>
+                                        <option value="Normal">Normal</option>
+                                        <option value="Top" style={{ color: 'var(--neon-pink)' }}>Top</option>
+                                        <option value="Back" style={{ color: '#f59e0b' }}>Back</option>
+                                      </select>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                      <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.5rem', width: '100%', fontSize: '1.25rem' }} title="Eliminar Serie">🗑️</button>
+                                    </div>
+                                  </div>
+                                ))}
+                                <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0, padding: '0.75rem' }}>
+                                  + Añadir Serie
+                                </button>
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                                <span className="mobile-label">Reps</span>
-                                <input type="text" placeholder="Ej: 10-12, Al fallo" value={set.reps} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'reps', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                                <span className="mobile-label">RPE</span>
-                                <input type="number" placeholder="rpe" value={set.rpe} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'rpe', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                                <span className="mobile-label">KG Obj.</span>
-                                <input type="number" placeholder="kg" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                                <span className="mobile-label">Tipo</span>
-                                <select value={set.type} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'type', e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>
-                                  <option value="Normal">Normal</option>
-                                  <option value="Top" style={{ color: 'var(--neon-pink)' }}>Top</option>
-                                  <option value="Back" style={{ color: '#f59e0b' }}>Back</option>
-                                </select>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                <button className="btn-ghost" onClick={() => removeSet(week.id, day.id, ex.id, set.id)} style={{ color: '#ff4d4d', padding: '0.5rem', width: '100%' }}>Eliminar Serie</button>
-                              </div>
-                            </div>
-                          ))}
-                          <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0, padding: '0.75rem' }}>
-                            + Añadir Serie
-                          </button>
+                            </>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <button className="btn-outline-blue" onClick={() => addExercise(week.id, day.id)} style={{ width: '100%', borderStyle: 'dashed', backgroundColor: 'rgba(0, 229, 255, 0.05)' }}>
                     + Añadir Ejercicio
                   </button>
-                </div>
-              ))}
+                </>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
