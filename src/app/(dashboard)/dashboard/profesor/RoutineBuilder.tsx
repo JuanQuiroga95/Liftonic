@@ -199,29 +199,15 @@ export default function RoutineBuilder({
   // Accordion State
   const [expandedWeeks, setExpandedWeeks] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
-    if (initialRoutine?.weeks) {
-      initialRoutine.weeks.forEach((w: any) => initialState[w.id] = true);
-    } else {
-      initialState[weeks[0].id] = true;
+    if (!initialRoutine?.weeks) {
+      initialState[weeks[0].id] = true; // Solo expandir la primera si es una rutina totalmente nueva
     }
     return initialState;
   });
   
-  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>(() => {
-    const initialState: Record<string, boolean> = {};
-    if (initialRoutine?.weeks) {
-      initialRoutine.weeks.forEach((w: any) => w.days.forEach((d: any) => initialState[d.id] = true));
-    }
-    return initialState;
-  });
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
-  const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>(() => {
-    const initialState: Record<string, boolean> = {};
-    if (initialRoutine?.weeks) {
-      initialRoutine.weeks.forEach((w: any) => w.days.forEach((d: any) => d.exercises.forEach((e: any) => initialState[e.id] = true)));
-    }
-    return initialState;
-  });
+  const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
 
   const toggleWeek = (id: string) => setExpandedWeeks(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleDay = (id: string) => setExpandedDays(prev => ({ ...prev, [id]: !prev[id] }));
