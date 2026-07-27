@@ -454,10 +454,10 @@ export default function RoutineBuilder({
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', paddingBottom: '1rem' }}>
               {week.days.length === 0 && <p style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>No hay días en esta semana. Agrega uno.</p>}
               {week.days.map((day) => (
-                <div key={day.id} style={{ minWidth: '350px', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
+                <div key={day.id} style={{ flex: '1 1 350px', minWidth: '350px', padding: '1rem', backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)' }}>
                   <input 
                     value={day.day_name} 
                     onChange={e => updateDayName(week.id, day.id, e.target.value)}
