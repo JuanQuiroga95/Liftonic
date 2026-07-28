@@ -317,7 +317,15 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       setMediaUrl("");
     }
     setFile(null);
-    document.querySelector('form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      const form = document.getElementById('exercise-form');
+      if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.body.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const handleDelete = async (id: string) => {
@@ -403,7 +411,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
   return (
     <div style={{ backgroundColor: 'var(--surface)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
       <h2>Biblioteca de Ejercicios</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', marginBottom: '2rem' }}>
+      <form id="exercise-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '500px', marginBottom: '2rem' }}>
         <input placeholder="Nombre del Ejercicio" value={name} onChange={e => setName(e.target.value)} required style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         <input placeholder="Variación (Opcional, ej: Inclinado, Mancuernas)" value={variation} onChange={e => setVariation(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
         <textarea placeholder="Descripción / Notas (Opcional)" value={description} onChange={e => setDescription(e.target.value)} rows={3} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
