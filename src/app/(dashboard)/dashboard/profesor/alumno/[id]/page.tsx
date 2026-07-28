@@ -410,9 +410,23 @@ export default function StudentDetailView() {
             )
           ) : (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                <button className="btn-ghost" onClick={() => setSelectedHistoryRoutine(null)}>← Volver al Historial</button>
-                <h2 style={{ margin: 0, color: 'var(--neon-pink)', fontSize: '1.25rem' }}>{selectedHistoryRoutine.title} (Archivada)</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <button className="btn-ghost" onClick={() => setSelectedHistoryRoutine(null)}>← Volver al Historial</button>
+                  <h2 style={{ margin: 0, color: 'var(--neon-pink)', fontSize: '1.25rem' }}>{selectedHistoryRoutine.title} (Archivada)</h2>
+                </div>
+                <button 
+                  className="btn-primary" 
+                  onClick={() => {
+                    const clone = { ...selectedHistoryRoutine };
+                    delete clone.id;
+                    delete clone.created_at;
+                    sessionStorage.setItem('reusableRoutine', JSON.stringify(clone));
+                    router.push('/dashboard/profesor?tab=rutinas');
+                  }}
+                >
+                  Copiar y Reutilizar
+                </button>
               </div>
               
               {/* Week Selector */}

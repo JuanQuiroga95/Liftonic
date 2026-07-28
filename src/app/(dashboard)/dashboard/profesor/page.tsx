@@ -42,6 +42,12 @@ export default function ProfessorDashboard() {
 
   useEffect(() => {
     Promise.all([fetchAlumnos(), fetchEjercicios(), fetchProfile()]).finally(() => setLoading(false));
+    
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab) setActiveTab(tab);
+    }
   }, []);
 
   return (

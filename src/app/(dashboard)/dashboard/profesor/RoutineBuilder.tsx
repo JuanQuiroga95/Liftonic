@@ -185,12 +185,27 @@ export default function RoutineBuilder({
   initialRoutine?: any,
   onCancelEdit?: () => void
 }) {
-  const [studentId, setStudentId] = useState(initialRoutine?.student_id || "");
-  const [title, setTitle] = useState(initialRoutine?.title || "");
-  const [startDate, setStartDate] = useState(initialRoutine?.start_date ? new Date(initialRoutine.start_date).toISOString().split('T')[0] : "");
-  const [endDate, setEndDate] = useState(initialRoutine?.end_date ? new Date(initialRoutine.end_date).toISOString().split('T')[0] : "");
+  // Read reusable routine from sessionStorage if no initialRoutine is passed
+  const getInitial = () => {
+    if (initialRoutine) return initialRoutine;
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('reusableRoutine');
+      if (stored) {
+        sessionStorage.removeItem('reusableRoutine'); // Clean up after reading
+        return JSON.parse(stored);
+      }
+    }
+    return null;
+  };
+
+  const baseRoutine = getInitial();
+
+  const [studentId, setStudentId] = useState(baseRoutine?.student_id || "");
+  const [title, setTitle] = useState(baseRoutine?.title ? `${baseRoutine.title} (Copia)` : "");
+  const [startDate, setStartDate] = useState(baseRoutine?.start_date ? new Date(baseRoutine.start_date).toISOString().split('T')[0] : "");
+  const [endDate, setEndDate] = useState(baseRoutine?.end_date ? new Date(baseRoutine.end_date).toISOString().split('T')[0] : "");
   
-  const [weeks, setWeeks] = useState<RoutineWeek[]>(initialRoutine?.weeks || [
+  const [weeks, setWeeks] = useState<RoutineWeek[]>(baseRoutine?.weeks || [
     { id: uuidv4(), week_number: 1, days: [] }
   ]);
 
@@ -199,8 +214,11 @@ export default function RoutineBuilder({
   // Accordion State
   const [expandedWeeks, setExpandedWeeks] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
-    if (!initialRoutine?.weeks) {
+    if (!baseRoutine?.weeks) {
       initialState[weeks[0].id] = true; // Solo expandir la primera si es una rutina totalmente nueva
+    } else {
+      // Expand all weeks if it's a loaded routine
+      weeks.forEach(w => initialState[w.id] = true);
     }
     return initialState;
   });
@@ -438,8 +456,8 @@ export default function RoutineBuilder({
 
     setSaving(true);
     try {
-      const isEditing = !!initialRoutine?.id;
-      const url = isEditing ? `/api/profesor/routines/${initialRoutine.id}` : "/api/profesor/routines";
+      const isEditing = !!baseRoutine?.id && initialRoutine; // Only PUT if it's an explicitly edited initialRoutine
+      const url = isEditing ? `/api/profesor/routines/${baseRoutine.id}` : "/api/profesor/routines";
       const method = isEditing ? "PUT" : "POST";
       
       const res = await fetch(url, {
