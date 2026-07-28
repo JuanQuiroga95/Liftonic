@@ -16,6 +16,8 @@ export default function StudentDetailView() {
   const [routine, setRoutine] = useState<any>(null);
   const [activeWeekIndex, setActiveWeekIndex] = useState(0);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+  const [routinesHistory, setRoutinesHistory] = useState<any[]>([]);
+  const [selectedHistoryRoutine, setSelectedHistoryRoutine] = useState<any>(null);
   
   const [deletingRoutine, setDeletingRoutine] = useState(false);
   const [savingEx, setSavingEx] = useState<string | null>(null);
@@ -145,6 +147,13 @@ export default function StudentDetailView() {
         if (!data.error) setRoutine(data);
       });
 
+    // Fetch Routines History
+    fetch(`/api/profesor/students/${id}/routines`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.error && Array.isArray(data)) setRoutinesHistory(data);
+      });
+
     // Fetch Anamnesis History
     fetch(`/api/profesor/students/${id}/anamnesis`)
       .then(r => r.json())
@@ -214,6 +223,7 @@ export default function StudentDetailView() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
         <button style={{ background: 'transparent', color: activeTab === 'rutina' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'rutina' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'rutina' ? 'bold' : 'normal' }} onClick={() => setActiveTab('rutina')}>Rutina Activa</button>
+        <button style={{ background: 'transparent', color: activeTab === 'historial' ? 'var(--neon-blue)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'historial' ? '2px solid var(--neon-blue)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'historial' ? 'bold' : 'normal' }} onClick={() => { setActiveTab('historial'); setSelectedHistoryRoutine(null); }}>Historial de Rutinas</button>
         <button style={{ background: 'transparent', color: activeTab === 'encuesta' ? 'var(--neon-pink)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'encuesta' ? '2px solid var(--neon-pink)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'encuesta' ? 'bold' : 'normal' }} onClick={() => setActiveTab('encuesta')}>Encuesta</button>
         <button style={{ background: 'transparent', color: activeTab === 'metricas' ? 'var(--neon-green)' : 'var(--foreground-muted)', border: 'none', borderBottom: activeTab === 'metricas' ? '2px solid var(--neon-green)' : '2px solid transparent', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: activeTab === 'metricas' ? 'bold' : 'normal' }} onClick={() => setActiveTab('metricas')}>Métricas y RM</button>
       </div>
@@ -371,6 +381,127 @@ export default function StudentDetailView() {
                 </div>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'historial' && (
+        <div>
+          {!selectedHistoryRoutine ? (
+            routinesHistory.length === 0 ? (
+              <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>No hay rutinas en el historial para este alumno.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <h2 style={{ color: 'var(--foreground)', marginBottom: '1rem' }}>Historial de Rutinas</h2>
+                {routinesHistory.map(r => (
+                  <div key={r.id} style={{ backgroundColor: 'var(--surface)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--neon-blue)' }}>{r.title}</h3>
+                      <p style={{ margin: 0, color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>
+                        Inicio: {new Date(r.start_date).toLocaleDateString()} | Fin: {new Date(r.end_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button className="btn-outline-blue" onClick={() => { setSelectedHistoryRoutine(r); setActiveWeekIndex(0); setExpandedExercises({}); }}>
+                      Ver Rutina
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button className="btn-ghost" onClick={() => setSelectedHistoryRoutine(null)}>← Volver al Historial</button>
+                <h2 style={{ margin: 0, color: 'var(--neon-pink)', fontSize: '1.25rem' }}>{selectedHistoryRoutine.title} (Archivada)</h2>
+              </div>
+              
+              {/* Week Selector */}
+              <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', scrollbarWidth: 'none' }}>
+                {selectedHistoryRoutine.weeks?.map((week: any, idx: number) => (
+                  <button 
+                    key={week.id} 
+                    onClick={() => setActiveWeekIndex(idx)}
+                    style={{ 
+                      minWidth: '70px', padding: '0.75rem', borderRadius: '0.5rem', 
+                      backgroundColor: idx === activeWeekIndex ? 'var(--surface-hover)' : 'var(--surface)',
+                      border: `1px solid ${idx === activeWeekIndex ? 'var(--neon-fuchsia)' : 'var(--border)'}`,
+                      color: idx === activeWeekIndex ? 'var(--neon-fuchsia)' : 'var(--foreground-muted)',
+                      cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Sem</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{week.week_number}</div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Active Week Days for History Routine */}
+              {selectedHistoryRoutine.weeks?.[activeWeekIndex] && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {selectedHistoryRoutine.weeks[activeWeekIndex].days?.map((day: any) => (
+                    <div key={day.id} style={{ backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                      <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--surface-hover)' }}>
+                        <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', color: 'var(--neon-blue)' }}>
+                          D
+                        </div>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--foreground)' }}>{day.day_name}</h3>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>{day.exercises?.length || 0} ejercicios</span>
+                        </div>
+                      </div>
+                      <div style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                          {day.exercises?.map((ex: any, exIdx: number) => {
+                            const isExpanded = expandedExercises[ex.id];
+                            const color = getPillColor(exIdx);
+
+                            if (!isExpanded) {
+                              return (
+                                <button key={ex.id} onClick={() => toggleExercise(ex.id)} style={{ backgroundColor: color.bg, border: `1px solid ${color.border}`, padding: '0.5rem 1rem', borderRadius: '2rem', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                                  <strong style={{ color: color.border }}>{ex.exercise_name}</strong>
+                                  <span style={{ opacity: 0.8 }}>{summarizeSets(ex.sets)}</span>
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <div key={ex.id} style={{ width: '100%', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', padding: '1rem', marginTop: '0.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
+                                  <button className="btn-ghost" onClick={() => toggleExercise(ex.id)} style={{ fontSize: '0.875rem', padding: '0.25rem 0.75rem' }}>Cerrar</button>
+                                </div>
+                                <div style={{ paddingBottom: '0.5rem' }}>
+                                  <div className="routine-grid-header" style={{ color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>
+                                    <div style={{ textAlign: 'center' }}>#</div>
+                                    <div style={{ textAlign: 'center' }}>Peso (kg)</div>
+                                    <div style={{ textAlign: 'center' }}>Reps</div>
+                                    <div style={{ textAlign: 'center' }} title="RPE Prescrito">Prof.</div>
+                                    <div style={{ textAlign: 'center' }} title="RPE Percibido">Tu RPE</div>
+                                    <div style={{ textAlign: 'center' }}>Tipo</div>
+                                    <div style={{ textAlign: 'center' }}>✓</div>
+                                  </div>
+                                  {ex.sets?.map((set: any, sIdx: number) => (
+                                    <div key={set.id} className="routine-grid-row" style={{ backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: '1px solid var(--border)', transition: 'background-color 0.2s', marginBottom: '0.5rem' }}>
+                                      <div style={{ textAlign: 'center', color: 'var(--foreground-muted)', fontSize: '0.875rem', fontWeight: 'bold' }}>{sIdx + 1}</div>
+                                      <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--foreground)' }}>{set.weight || '-'} kg</div>
+                                      <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--foreground)' }}>{set.reps || '-'}</div>
+                                      <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--foreground)' }}>{set.rpe || '-'}</div>
+                                      <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--foreground-muted)' }}>-</div>
+                                      <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '600', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--foreground)') }}>{set.type}</div>
+                                      <div style={{ textAlign: 'center' }}>-</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

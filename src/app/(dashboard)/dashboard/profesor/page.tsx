@@ -317,7 +317,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       setMediaUrl("");
     }
     setFile(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleDelete = async (id: string) => {
@@ -448,8 +448,8 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
               <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>Ver Multimedia</a>
             )}
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--surface-hover)', paddingTop: '1rem' }}>
-              <button className="btn-outline-blue" onClick={() => handleEdit(e)} style={{ fontSize: '0.75rem', flex: 1 }}>Editar</button>
-              <button className="btn-danger" onClick={() => handleDelete(e.id)} style={{ fontSize: '0.75rem', flex: 1 }}>Borrar</button>
+              <button type="button" className="btn-outline-blue" onClick={() => handleEdit(e)} style={{ fontSize: '0.75rem', flex: 1 }}>Editar</button>
+              <button type="button" className="btn-danger" onClick={() => handleDelete(e.id)} style={{ fontSize: '0.75rem', flex: 1 }}>Borrar</button>
             </div>
           </div>
         ))}
