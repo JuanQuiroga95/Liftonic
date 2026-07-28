@@ -318,14 +318,10 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
     }
     setFile(null);
     setTimeout(() => {
-      const form = document.getElementById('exercise-form');
-      if (form) {
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        document.body.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    }, 100);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 150);
   };
 
   const handleDelete = async (id: string) => {
