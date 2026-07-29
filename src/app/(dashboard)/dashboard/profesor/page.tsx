@@ -359,8 +359,8 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       let finalMediaType = mediaType;
 
       if (mediaType === "UPLOAD" && file) {
-        // Validar tamaño del archivo (ejemplo: max 100MB para que no tarde una eternidad)
-        const MAX_MB = 100;
+        // Validar tamaño del archivo (ejemplo: max 150MB para que no tarde una eternidad)
+        const MAX_MB = 150;
         if (file.size > MAX_MB * 1024 * 1024) {
           alert(`El archivo es demasiado grande (${(file.size / (1024 * 1024)).toFixed(1)}MB). El límite es de ${MAX_MB}MB para evitar tiempos de carga excesivos.\n\nTip: Para reducir el tamaño, podés bajar la resolución de la cámara (ej: 1080p en lugar de 4K) o pasarte el video por WhatsApp (lo comprime) y subir esa versión.`);
           setLoading(false);
