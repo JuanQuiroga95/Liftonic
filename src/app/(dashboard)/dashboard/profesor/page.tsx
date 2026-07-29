@@ -434,6 +434,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         throw new Error(errData.error || "Error al guardar");
       }
 
+      alert("¡Ejercicio guardado con éxito!");
       cancelEdit();
       onReload();
     } catch (error: any) {
