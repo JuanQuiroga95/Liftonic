@@ -306,6 +306,12 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
   const [mediaType, setMediaType] = useState("NONE");
   const [mediaUrl, setMediaUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  
+  const [mediaType2, setMediaType2] = useState("NONE");
+  const [mediaUrl2, setMediaUrl2] = useState("");
+  const [file2, setFile2] = useState<File | null>(null);
+  const [showSecondMedia, setShowSecondMedia] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -323,6 +329,17 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       setMediaUrl("");
     }
     setFile(null);
+    
+    if (ex.media && ex.media[1] && ex.media[1].url) {
+      setMediaType2(ex.media[1].type || "LINK");
+      setMediaUrl2(ex.media[1].url);
+      setShowSecondMedia(true);
+    } else {
+      setMediaType2("NONE");
+      setMediaUrl2("");
+      setShowSecondMedia(false);
+    }
+    setFile2(null);
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       document.body.scrollTo({ top: 0, behavior: 'smooth' });
@@ -347,7 +364,9 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
 
   const cancelEdit = () => {
     setEditingId(null);
-    setName(""); setDescription(""); setVariation(""); setMediaUrl(""); setFile(null); setMediaType("NONE");
+    setName(""); setDescription(""); setVariation(""); 
+    setMediaUrl(""); setFile(null); setMediaType("NONE");
+    setMediaUrl2(""); setFile2(null); setMediaType2("NONE"); setShowSecondMedia(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -418,7 +437,64 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         finalMediaType = "LINK"; // Para BD se guarda como URL externa
       }
 
-      const mediaPayload = (finalMediaType === "LINK" && finalMediaUrl) ? [{ type: 'LINK', url: finalMediaUrl }] : [];
+      let finalMediaUrl2 = mediaUrl2;
+      let finalMediaType2 = mediaType2;
+
+      if (mediaType2 === "UPLOAD" && file2) {
+        const MAX_MB = 150;
+        if (file2.size > MAX_MB * 1024 * 1024) {
+          alert(`El segundo archivo es demasiado grande. El límite es de ${MAX_MB}MB.`);
+          setLoading(false);
+          return;
+        }
+
+        const signRes = await fetch('/api/profesor/cloudinary-sign', { method: 'POST' });
+        if (!signRes.ok) throw new Error("No se pudo iniciar la subida segura del segundo archivo.");
+        const signData = await signRes.json();
+        
+        const chunkSize = 20 * 1024 * 1024;
+        const totalChunks = Math.ceil(file2.size / chunkSize);
+        const uploadId = `upl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        let uploadData = null;
+
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * chunkSize;
+          const end = Math.min(start + chunkSize, file2.size);
+          const chunk = file2.slice(start, end);
+          const chunkFormData = new FormData();
+          chunkFormData.append("file", chunk);
+          chunkFormData.append("upload_preset", "liftonic_unsigned");
+
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
+            method: "POST",
+            headers: {
+              "X-Unique-Upload-Id": uploadId,
+              "Content-Range": `bytes ${start}-${end - 1}/${file2.size}`,
+            },
+            body: chunkFormData,
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            let parsedErr;
+            try { parsedErr = JSON.parse(errText).error.message; } catch (e) { parsedErr = errText; }
+            throw new Error(`Error de Cloudinary en archivo 2: ${parsedErr}`);
+          }
+          uploadData = await res.json();
+          // Progreso simplificado, reinicia para el segundo archivo
+          setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
+        }
+        finalMediaUrl2 = uploadData.secure_url;
+        finalMediaType2 = "LINK";
+      }
+
+      const mediaPayload = [];
+      if (finalMediaType !== "NONE" && finalMediaUrl) {
+        mediaPayload.push({ type: 'LINK', url: finalMediaUrl });
+      }
+      if (finalMediaType2 !== "NONE" && finalMediaUrl2) {
+        mediaPayload.push({ type: 'LINK', url: finalMediaUrl2 });
+      }
 
       const url = editingId ? `/api/profesor/exercises/${editingId}` : '/api/profesor/exercises';
       const method = editingId ? 'PUT' : 'POST';
@@ -472,6 +548,30 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Sube un video o foto directamente desde tu dispositivo.</p>
           </div>
         )}
+
+        {!showSecondMedia ? (
+          <button type="button" className="btn-outline-blue" onClick={() => setShowSecondMedia(true)} style={{ alignSelf: 'flex-start', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+            + Agregar 2do Video (Biserie)
+          </button>
+        ) : (
+          <div style={{ padding: '1rem', border: '1px dashed var(--border)', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ margin: 0, color: 'var(--foreground)' }}>Segundo Video (Opcional)</h4>
+              <button type="button" onClick={() => { setShowSecondMedia(false); setMediaType2("NONE"); setMediaUrl2(""); setFile2(null); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.875rem' }}>Quitar</button>
+            </div>
+            <select value={mediaType2} onChange={e => setMediaType2(e.target.value)} style={{ padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }}>
+              <option value="NONE">Sin Video</option>
+              <option value="LINK">Enlace a Video (YouTube / Instagram)</option>
+              <option value="UPLOAD">Subir Archivo</option>
+            </select>
+            {mediaType2 === "LINK" && (
+              <input placeholder="Ej: https://www.youtube.com/watch?v=..." value={mediaUrl2} onChange={e => setMediaUrl2(e.target.value)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+            )}
+            {mediaType2 === "UPLOAD" && (
+              <input type="file" accept="video/*,image/*" onChange={e => setFile2(e.target.files?.[0] || null)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface-hover)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+            )}
+          </div>
+        )}
         
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 1 }}>
@@ -490,9 +590,14 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
           <div key={e.id} style={{ padding: '1rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{e.name} {e.variation && <span style={{color: 'var(--neon-blue)', fontSize: '0.875rem'}}>({e.variation})</span>}</h3>
             {e.description && <p style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)', marginBottom: '0.5rem' }}>{e.description}</p>}
-            {e.media && e.media[0] && e.media[0].url && (
-              <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>Ver Multimedia</a>
-            )}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {e.media && e.media[0] && e.media[0].url && (
+                <a href={e.media[0].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>Ver Multimedia 1</a>
+              )}
+              {e.media && e.media[1] && e.media[1].url && (
+                <a href={e.media[1].url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-blue)', fontSize: '0.875rem', textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>Ver Multimedia 2</a>
+              )}
+            </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid var(--surface-hover)', paddingTop: '1rem' }}>
               <button type="button" className="btn-outline-blue" onClick={() => handleEdit(e)} style={{ fontSize: '0.75rem', flex: 1 }}>Editar</button>
               <button type="button" className="btn-danger" onClick={() => handleDelete(e.id)} style={{ fontSize: '0.75rem', flex: 1 }}>Borrar</button>

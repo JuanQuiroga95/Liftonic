@@ -492,7 +492,10 @@ function RoutineViewer() {
                               
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <span className="mobile-label">Peso (kg)</span>
-                                <input type="number" placeholder="kg" value={setWeights[set.id] ?? set.weight} onChange={(e) => updateSetWeight(set.id, parseFloat(e.target.value))} style={{ width: '100%', maxWidth: '80px', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} />
+                                <div style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: '90px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', overflow: 'hidden' }}>
+                                  <input type="number" placeholder="kg" value={setWeights[set.id] ?? set.weight} onChange={(e) => updateSetWeight(set.id, parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'transparent', border: 'none', color: 'var(--foreground)', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', outline: 'none' }} />
+                                  <span style={{ padding: '0.5rem 0.5rem 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem', pointerEvents: 'none', fontWeight: 'bold' }}>kg</span>
+                                </div>
                               </div>
                               
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

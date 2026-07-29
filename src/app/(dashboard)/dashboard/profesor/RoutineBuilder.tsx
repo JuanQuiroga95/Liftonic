@@ -444,6 +444,48 @@ export default function RoutineBuilder({
     }));
   };
 
+  const moveExerciseUp = (weekId: string, dayId: string, exIndex: number) => {
+    if (exIndex === 0) return;
+    setWeeks(weeks.map(w => {
+      if (w.id === weekId) {
+        return {
+          ...w, days: w.days.map(d => {
+            if (d.id === dayId) {
+              const newExercises = [...d.exercises];
+              const temp = newExercises[exIndex - 1];
+              newExercises[exIndex - 1] = newExercises[exIndex];
+              newExercises[exIndex] = temp;
+              return { ...d, exercises: newExercises };
+            }
+            return d;
+          })
+        };
+      }
+      return w;
+    }));
+  };
+
+  const moveExerciseDown = (weekId: string, dayId: string, exIndex: number) => {
+    setWeeks(weeks.map(w => {
+      if (w.id === weekId) {
+        return {
+          ...w, days: w.days.map(d => {
+            if (d.id === dayId) {
+              if (exIndex >= d.exercises.length - 1) return d;
+              const newExercises = [...d.exercises];
+              const temp = newExercises[exIndex + 1];
+              newExercises[exIndex + 1] = newExercises[exIndex];
+              newExercises[exIndex] = temp;
+              return { ...d, exercises: newExercises };
+            }
+            return d;
+          })
+        };
+      }
+      return w;
+    }));
+  };
+
   const handleSave = async () => {
     if (!studentId || !title || !startDate || !endDate) return alert("Completa la información general (Alumno, Título, Fechas).");
     
@@ -564,7 +606,15 @@ export default function RoutineBuilder({
                               </button>
                               <span style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1} {!isExExpanded && `- ${ex.sets.length} series`}</span>
                             </div>
-                            <button className="btn-ghost" onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ color: '#ff4d4d', padding: '0.25rem' }}>X</button>
+                            <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                              {eIndex > 0 && (
+                                <button className="btn-ghost" onClick={() => moveExerciseUp(week.id, day.id, eIndex)} style={{ padding: '0.25rem 0.5rem', fontSize: '1.2rem', lineHeight: 1 }} title="Subir">🔼</button>
+                              )}
+                              {eIndex < day.exercises.length - 1 && (
+                                <button className="btn-ghost" onClick={() => moveExerciseDown(week.id, day.id, eIndex)} style={{ padding: '0.25rem 0.5rem', fontSize: '1.2rem', lineHeight: 1 }} title="Bajar">🔽</button>
+                              )}
+                              <button className="btn-ghost" onClick={() => removeExercise(week.id, day.id, ex.id)} style={{ color: '#ff4d4d', padding: '0.25rem 0.5rem', marginLeft: '0.5rem' }}>X</button>
+                            </div>
                           </div>
                           
                           {isExExpanded && (
@@ -602,7 +652,10 @@ export default function RoutineBuilder({
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                                       <span className="mobile-label">KG Obj.</span>
-                                      <input type="number" placeholder="kg" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center' }} />
+                                      <div style={{ display: 'flex', alignItems: 'center', width: '100%', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', overflow: 'hidden' }}>
+                                        <input type="number" placeholder="kg" value={set.weight} onChange={e => updateSet(week.id, day.id, ex.id, set.id, 'weight', parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'transparent', border: 'none', color: 'var(--foreground)', textAlign: 'center', outline: 'none' }} />
+                                        <span style={{ padding: '0.5rem 0.5rem 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem', pointerEvents: 'none' }}>kg</span>
+                                      </div>
                                     </div>
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                                       <span className="mobile-label">Tipo</span>
