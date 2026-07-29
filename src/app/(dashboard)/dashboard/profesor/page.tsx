@@ -395,6 +395,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
           chunkFormData.append("api_key", signData.apiKey);
           chunkFormData.append("timestamp", signData.timestamp.toString());
           chunkFormData.append("signature", signData.signature);
+          chunkFormData.append("folder", "liftonic_exercises");
 
           const res = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
             method: "POST",
