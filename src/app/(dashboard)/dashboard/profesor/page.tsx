@@ -379,30 +379,15 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         formData.append("timestamp", signData.timestamp.toString());
         formData.append("signature", signData.signature);
 
-        // Subida directa a Cloudinary con progreso
-        const uploadData = await new Promise<any>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", `https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`);
-          
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const percentComplete = Math.round((event.loaded / event.total) * 100);
-              setUploadProgress(percentComplete);
-            }
-          };
-
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(JSON.parse(xhr.responseText));
-            } else {
-              reject(new Error("Error al subir a Cloudinary: " + xhr.responseText));
-            }
-          };
-
-          xhr.onerror = () => reject(new Error("Error de red durante la subida a Cloudinary"));
-          
-          xhr.send(formData);
+        // Subida directa a Cloudinary (usamos fetch nuevamente porque XHR resultaba más lento para el usuario)
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
+          method: "POST",
+          body: formData,
         });
+
+        if (!uploadRes.ok) throw new Error("Error al subir a Cloudinary");
+        
+        const uploadData = await uploadRes.json();
         finalMediaUrl = uploadData.secure_url;
         finalMediaType = "LINK"; // Para BD se guarda como URL externa
       }
