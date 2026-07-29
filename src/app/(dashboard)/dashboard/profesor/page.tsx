@@ -359,6 +359,14 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       let finalMediaType = mediaType;
 
       if (mediaType === "UPLOAD" && file) {
+        // Validar tamaño del archivo (ejemplo: max 50MB para que no tarde una eternidad)
+        const MAX_MB = 50;
+        if (file.size > MAX_MB * 1024 * 1024) {
+          alert(`El archivo es demasiado grande (${(file.size / (1024 * 1024)).toFixed(1)}MB). El límite es de ${MAX_MB}MB para evitar tiempos de carga excesivos.\n\nTip: Para reducir el tamaño, podés bajar la resolución de la cámara (ej: 1080p en lugar de 4K) o pasarte el video por WhatsApp (lo comprime) y subir esa versión.`);
+          setLoading(false);
+          return;
+        }
+
         // Pedir la firma de seguridad a nuestro servidor (evita exponer el API Secret en el frontend)
         const signRes = await fetch('/api/profesor/cloudinary-sign', { method: 'POST' });
         if (!signRes.ok) throw new Error("No se pudo iniciar la subida segura. Verifica las variables de entorno.");
@@ -371,15 +379,30 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         formData.append("timestamp", signData.timestamp.toString());
         formData.append("signature", signData.signature);
 
-        // Subida directa a Cloudinary (saltando el límite de Vercel)
-        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
-          method: "POST",
-          body: formData,
-        });
+        // Subida directa a Cloudinary con progreso
+        const uploadData = await new Promise<any>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", `https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`);
+          
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = Math.round((event.loaded / event.total) * 100);
+              setUploadProgress(percentComplete);
+            }
+          };
 
-        if (!uploadRes.ok) throw new Error("Error al subir a Cloudinary");
-        
-        const uploadData = await uploadRes.json();
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(JSON.parse(xhr.responseText));
+            } else {
+              reject(new Error("Error al subir a Cloudinary: " + xhr.responseText));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Error de red durante la subida a Cloudinary"));
+          
+          xhr.send(formData);
+        });
         finalMediaUrl = uploadData.secure_url;
         finalMediaType = "LINK"; // Para BD se guarda como URL externa
       }
@@ -407,6 +430,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
       console.error(error);
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -439,7 +463,7 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button type="submit" className="btn-primary" disabled={loading} style={{ flex: 1 }}>
-            {loading ? 'Guardando...' : (editingId ? 'Actualizar Ejercicio' : 'Crear Ejercicio')}
+            {loading ? (uploadProgress > 0 ? `Subiendo Video... ${uploadProgress}%` : 'Guardando...') : (editingId ? 'Actualizar Ejercicio' : 'Crear Ejercicio')}
           </button>
           {editingId && (
             <button type="button" className="btn-ghost" onClick={cancelEdit} disabled={loading}>
