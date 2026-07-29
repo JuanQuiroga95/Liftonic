@@ -379,30 +379,43 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
         formData.append("timestamp", signData.timestamp.toString());
         formData.append("signature", signData.signature);
 
-        // Subida directa a Cloudinary con progreso
-        const uploadData = await new Promise<any>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", `https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`);
-          
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const percentComplete = Math.round((event.loaded / event.total) * 100);
-              setUploadProgress(percentComplete);
-            }
-          };
+        // Subida a Cloudinary por fragmentos (Chunks) para soportar archivos grandes y evitar rechazos
+        const chunkSize = 20 * 1024 * 1024; // 20 MB por fragmento
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        const uploadId = `upl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        let uploadData = null;
 
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(JSON.parse(xhr.responseText));
-            } else {
-              reject(new Error("Error de Cloudinary: " + xhr.responseText));
-            }
-          };
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * chunkSize;
+          const end = Math.min(start + chunkSize, file.size);
+          const chunk = file.slice(start, end);
 
-          xhr.onerror = () => reject(new Error("Error de red durante la subida a Cloudinary"));
+          const chunkFormData = new FormData();
+          chunkFormData.append("file", chunk);
+          chunkFormData.append("api_key", signData.apiKey);
+          chunkFormData.append("timestamp", signData.timestamp.toString());
+          chunkFormData.append("signature", signData.signature);
+
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
+            method: "POST",
+            headers: {
+              "X-Unique-Upload-Id": uploadId,
+              "Content-Range": `bytes ${start}-${end - 1}/${file.size}`,
+            },
+            body: chunkFormData,
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            let parsedErr;
+            try { parsedErr = JSON.parse(errText).error.message; } catch (e) { parsedErr = errText; }
+            throw new Error(`Error de Cloudinary: ${parsedErr}`);
+          }
           
-          xhr.send(formData);
-        });
+          uploadData = await res.json();
+          const percentComplete = Math.round(((i + 1) / totalChunks) * 100);
+          setUploadProgress(percentComplete);
+        }
         finalMediaUrl = uploadData.secure_url;
         finalMediaType = "LINK"; // Para BD se guarda como URL externa
       }
