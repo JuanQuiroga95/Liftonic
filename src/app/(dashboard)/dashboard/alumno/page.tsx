@@ -638,7 +638,7 @@ function RoutineViewer() {
                           } else if (isImage) {
                             return <img src={url} alt={`${infoModal.exercise_name} - ${index + 1}`} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} />;
                           } else if (isVideo || url.includes("cloudinary") || url.includes("r2.dev")) {
-                            return <video src={url} controls style={{ maxWidth: '100%', maxHeight: '400px', width: '100%' }}></video>;
+                            return <video src={url} controls playsInline preload="metadata" style={{ maxWidth: '100%', maxHeight: '400px', width: '100%' }}></video>;
                           } else {
                             return <a href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-blue)', padding: '2rem', display: 'block' }}>Abrir enlace multimedia {index + 1}</a>;
                           }
