@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const S3 = new S3Client({
   region: "auto",
@@ -19,30 +20,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
+    const { filename, contentType } = await request.json();
 
-    if (!file) {
-      return NextResponse.json({ error: 'File required' }, { status: 400 });
+    if (!filename || !contentType) {
+      return NextResponse.json({ error: 'Faltan datos de archivo' }, { status: 400 });
     }
 
-    const buffer = await file.arrayBuffer();
-    const filename = file.name;
+    // Usar la carpeta liftonic_exercises y agregar un timestamp para evitar colisiones
     const uniqueFilename = `liftonic_exercises/${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: uniqueFilename,
-      Body: Buffer.from(buffer),
-      ContentType: file.type || 'application/octet-stream',
+      ContentType: contentType,
     });
 
-    await S3.send(command);
+    // La URL firmada expira en 5 minutos
+    const signedUrl = await getSignedUrl(S3, command, { expiresIn: 300 });
 
-    const url = `${process.env.R2_PUBLIC_URL}/${uniqueFilename}`;
-    return NextResponse.json({ url });
+    const publicUrl = `${process.env.R2_PUBLIC_URL}/${uniqueFilename}`;
+
+    return NextResponse.json({ 
+      signedUrl, 
+      publicUrl, 
+      filename: uniqueFilename 
+    });
   } catch (error) {
-    console.error("R2 upload error:", error);
-    return NextResponse.json({ error: 'Error uploading file' }, { status: 500 });
+    console.error('Error signing R2 upload:', error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

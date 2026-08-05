@@ -386,54 +386,37 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
           return;
         }
 
-        // Pedir la firma de seguridad a nuestro servidor (evita exponer el API Secret en el frontend)
-        const signRes = await fetch('/api/profesor/cloudinary-sign', { method: 'POST' });
+        // Pedir la firma de seguridad a nuestro servidor
+        const signRes = await fetch('/api/profesor/r2-sign', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, contentType: file.type })
+        });
         if (!signRes.ok) throw new Error("No se pudo iniciar la subida segura. Verifica las variables de entorno.");
         
         const signData = await signRes.json();
         
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("api_key", signData.apiKey);
-        formData.append("timestamp", signData.timestamp.toString());
-        formData.append("signature", signData.signature);
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setUploadProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(true);
+            } else {
+              reject(new Error("Error de subida HTTP: " + xhr.status));
+            }
+          };
+          xhr.onerror = () => reject(new Error("Error de red al subir archivo"));
+          xhr.open("PUT", signData.signedUrl);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
+        });
 
-        // Subida a Cloudinary por fragmentos (Chunks) para soportar archivos grandes y evitar rechazos
-        const chunkSize = 20 * 1024 * 1024; // 20 MB por fragmento
-        const totalChunks = Math.ceil(file.size / chunkSize);
-        const uploadId = `upl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        let uploadData = null;
-
-        for (let i = 0; i < totalChunks; i++) {
-          const start = i * chunkSize;
-          const end = Math.min(start + chunkSize, file.size);
-          const chunk = file.slice(start, end);
-
-          const chunkFormData = new FormData();
-          chunkFormData.append("file", chunk);
-          chunkFormData.append("upload_preset", "liftonic_unsigned");
-
-          const res = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
-            method: "POST",
-            headers: {
-              "X-Unique-Upload-Id": uploadId,
-              "Content-Range": `bytes ${start}-${end - 1}/${file.size}`,
-            },
-            body: chunkFormData,
-          });
-
-          if (!res.ok) {
-            const errText = await res.text();
-            let parsedErr;
-            try { parsedErr = JSON.parse(errText).error.message; } catch (e) { parsedErr = errText; }
-            throw new Error(`Error de Cloudinary: ${parsedErr}`);
-          }
-          
-          uploadData = await res.json();
-          const percentComplete = Math.round(((i + 1) / totalChunks) * 100);
-          setUploadProgress(percentComplete);
-        }
-        finalMediaUrl = uploadData.secure_url;
+        finalMediaUrl = signData.publicUrl;
         finalMediaType = "LINK"; // Para BD se guarda como URL externa
       }
 
@@ -448,43 +431,35 @@ function ExerciseLibrary({ exercises, onReload }: { exercises: any[], onReload: 
           return;
         }
 
-        const signRes = await fetch('/api/profesor/cloudinary-sign', { method: 'POST' });
+        const signRes = await fetch('/api/profesor/r2-sign', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file2.name, contentType: file2.type })
+        });
         if (!signRes.ok) throw new Error("No se pudo iniciar la subida segura del segundo archivo.");
         const signData = await signRes.json();
         
-        const chunkSize = 20 * 1024 * 1024;
-        const totalChunks = Math.ceil(file2.size / chunkSize);
-        const uploadId = `upl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        let uploadData = null;
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setUploadProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(true);
+            } else {
+              reject(new Error("Error de subida HTTP archivo 2: " + xhr.status));
+            }
+          };
+          xhr.onerror = () => reject(new Error("Error de red al subir archivo 2"));
+          xhr.open("PUT", signData.signedUrl);
+          xhr.setRequestHeader("Content-Type", file2.type);
+          xhr.send(file2);
+        });
 
-        for (let i = 0; i < totalChunks; i++) {
-          const start = i * chunkSize;
-          const end = Math.min(start + chunkSize, file2.size);
-          const chunk = file2.slice(start, end);
-          const chunkFormData = new FormData();
-          chunkFormData.append("file", chunk);
-          chunkFormData.append("upload_preset", "liftonic_unsigned");
-
-          const res = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloudName}/auto/upload`, {
-            method: "POST",
-            headers: {
-              "X-Unique-Upload-Id": uploadId,
-              "Content-Range": `bytes ${start}-${end - 1}/${file2.size}`,
-            },
-            body: chunkFormData,
-          });
-
-          if (!res.ok) {
-            const errText = await res.text();
-            let parsedErr;
-            try { parsedErr = JSON.parse(errText).error.message; } catch (e) { parsedErr = errText; }
-            throw new Error(`Error de Cloudinary en archivo 2: ${parsedErr}`);
-          }
-          uploadData = await res.json();
-          // Progreso simplificado, reinicia para el segundo archivo
-          setUploadProgress(Math.round(((i + 1) / totalChunks) * 100));
-        }
-        finalMediaUrl2 = uploadData.secure_url;
+        finalMediaUrl2 = signData.publicUrl;
         finalMediaType2 = "LINK";
       }
 

@@ -6,6 +6,18 @@ import LogoutButton from "@/components/ui/LogoutButton";
 import Confetti from 'react-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const getStreakInfo = (weeks: number) => {
+  if (weeks >= 48) return { icon: '👑', label: 'Leyenda', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' };
+  if (weeks >= 24) return { icon: '💎', label: 'Diamante', color: 'var(--neon-blue)', bg: 'rgba(0, 229, 255, 0.1)' };
+  if (weeks >= 12) return { icon: '🦍', label: 'Gorila', color: 'var(--neon-pink)', bg: 'rgba(255, 0, 128, 0.1)' };
+  if (weeks >= 8) return { icon: '⚡', label: 'Rayo', color: '#eab308', bg: 'rgba(234, 179, 8, 0.1)' };
+  if (weeks >= 4) return { icon: '🔥', label: 'Fuego', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' };
+  if (weeks >= 3) return { icon: '🌳', label: 'Árbol', color: 'var(--neon-green)', bg: 'rgba(0, 255, 136, 0.1)' };
+  if (weeks >= 2) return { icon: '🍃', label: 'Hojas', color: 'var(--neon-green)', bg: 'rgba(0, 255, 136, 0.1)' };
+  if (weeks >= 1) return { icon: '🌿', label: 'Brote', color: 'var(--neon-green)', bg: 'rgba(0, 255, 136, 0.1)' };
+  return { icon: '🌱', label: 'Semilla', color: 'var(--foreground-muted)', bg: 'var(--surface-hover)' };
+};
+
 export default function AlumnoDashboard() {
   const [anamnesis, setAnamnesis] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -53,6 +65,8 @@ export default function AlumnoDashboard() {
         return <RoutineViewer />;
     }
   };
+
+  const streakInfo = progress ? getStreakInfo(progress.streak || 0) : null;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--background)' }}>
@@ -138,20 +152,20 @@ export default function AlumnoDashboard() {
               </p>
             </motion.div>
             
-            {progress && (
+            {progress && streakInfo && (
               <motion.div 
                 whileHover={{ scale: 1.05 }}
                 style={{ 
                   display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                  backgroundColor: progress.streak >= 4 ? 'rgba(0, 229, 255, 0.1)' : 'var(--surface-hover)', 
+                  backgroundColor: streakInfo.bg, 
                   padding: '0.75rem 1.25rem', borderRadius: '2rem', 
-                  border: `1px solid ${progress.streak >= 4 ? 'var(--neon-blue)' : 'var(--border)'}` 
+                  border: `1px solid ${streakInfo.color === 'var(--foreground-muted)' ? 'var(--border)' : streakInfo.color}` 
                 }}
               >
-                <span style={{ fontSize: '1.5rem' }}>{progress.streak >= 4 ? '🔥' : '🌱'}</span>
+                <span style={{ fontSize: '1.5rem' }}>{streakInfo.icon}</span>
                 <div>
-                  <div style={{ fontWeight: 'bold', color: progress.streak >= 4 ? 'var(--neon-blue)' : 'var(--foreground)', lineHeight: 1 }}>{progress.streak || 0} Semanas</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>Racha actual</div>
+                  <div style={{ fontWeight: 'bold', color: streakInfo.color, lineHeight: 1 }}>{progress.streak || 0} Semanas</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>{streakInfo.label}</div>
                 </div>
               </motion.div>
             )}
@@ -183,7 +197,25 @@ function RoutineViewer() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    fetch('/api/alumno/routine').then(r => r.json()).then(setRoutine);
+    try {
+      const savedCompleted = localStorage.getItem('liftonic_completedSets');
+      if (savedCompleted) setCompletedSets(JSON.parse(savedCompleted));
+      
+      const savedWeights = localStorage.getItem('liftonic_setWeights');
+      if (savedWeights) setSetWeights(JSON.parse(savedWeights));
+    } catch (e) {
+      console.error('Error loading from local storage', e);
+    }
+
+    fetch('/api/alumno/routine').then(r => r.json()).then(data => {
+      setRoutine(data);
+      if (data && data.weeks) {
+        // Find the first week that has at least one day NOT saved
+        const isDaySaved = (day: any) => day?.exercises?.some((ex: any) => ex.actual_weight !== null && ex.actual_weight !== undefined);
+        const currentWeekIdx = data.weeks.findIndex((w: any) => w.days.some((d: any) => !isDaySaved(d)));
+        if (currentWeekIdx !== -1) setActiveWeekIndex(currentWeekIdx);
+      }
+    });
     fetch('/api/alumno/metrics').then(r => r.json()).then(data => setMetrics(data || []));
     setDimensions({ width: window.innerWidth, height: window.innerHeight });
   }, []);
@@ -217,7 +249,11 @@ function RoutineViewer() {
   };
 
   const handleCheckSet = (ex: any, set: any, isChecked: boolean) => {
-    setCompletedSets(prev => ({ ...prev, [set.id]: isChecked }));
+    setCompletedSets(prev => {
+      const updated = { ...prev, [set.id]: isChecked };
+      localStorage.setItem('liftonic_completedSets', JSON.stringify(updated));
+      return updated;
+    });
     
     if (isChecked) {
       const currentWeight = setWeights[set.id] || set.weight;
@@ -237,7 +273,11 @@ function RoutineViewer() {
   };
 
   const updateSetWeight = (setId: string, value: number) => {
-    setSetWeights(prev => ({ ...prev, [setId]: value }));
+    setSetWeights(prev => {
+      const updated = { ...prev, [setId]: value };
+      localStorage.setItem('liftonic_setWeights', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleFinishWorkout = async (day: any) => {
@@ -264,6 +304,11 @@ function RoutineViewer() {
         const newProgress = await fetch('/api/alumno/progress').then(r => r.json());
         setCelebrationEvent({ trainedDays: newProgress.trainedDays });
         setShowConfetti(true);
+        // Clear local storage on successful save
+        localStorage.removeItem('liftonic_completedSets');
+        localStorage.removeItem('liftonic_setWeights');
+        setCompletedSets({});
+        setSetWeights({});
       } else {
         alert('Hubo un error al guardar tu entrenamiento.');
       }
@@ -273,6 +318,11 @@ function RoutineViewer() {
     } finally {
       setSavingWorkout(false);
     }
+  };
+
+  const isDayAlreadySaved = (day: any) => {
+    if (!day || !day.exercises) return false;
+    return day.exercises.some((ex: any) => ex.actual_weight !== null && ex.actual_weight !== undefined);
   };
 
   const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -285,22 +335,17 @@ function RoutineViewer() {
     if (todayRoutine) {
       todayMessage = `💪 Hoy tenés gym: ${todayRoutine.day_name}`;
     } else if (activeWeek.days.length > 0) {
-      todayRoutine = activeWeek.days[0]; // FIX: Assign fallback todayRoutine so it doesn't break completion
+      todayRoutine = activeWeek.days.find((d: any) => !isDayAlreadySaved(d)) || activeWeek.days[0];
       todayMessage = `📅 Próximo entreno en tu rutina: ${todayRoutine.day_name}`;
     }
   }
 
-  // Helper to check if a specific day is fully completed
+  // Helper to check if a specific day has at least one set completed
   const isDayCompleted = (day: any) => {
     if (!day || !day.exercises || day.exercises.length === 0) return false;
     const allSets = day.exercises.flatMap((e: any) => e.sets);
     if (allSets.length === 0) return false;
-    return allSets.every((s: any) => completedSets[s.id]);
-  };
-
-  const isDayAlreadySaved = (day: any) => {
-    if (!day || !day.exercises) return false;
-    return day.exercises.some((ex: any) => ex.actual_weight !== null && ex.actual_weight !== undefined);
+    return allSets.some((s: any) => completedSets[s.id]);
   };
 
   const getDayTotalKg = (day: any) => {
@@ -543,8 +588,8 @@ function RoutineViewer() {
                     initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                     style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--neon-green)', backgroundColor: 'rgba(0, 255, 136, 0.05)', textAlign: 'center' }}
                   >
-                    <h3 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0' }}>¡Entrenamiento Completado! ✅</h3>
-                    <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1.5rem 0' }}>Has levantado un aproximado de <strong>{getDayTotalKg(day)} kg</strong> en total en este día.</p>
+                    <h3 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0' }}>¡Buen trabajo! 💪</h3>
+                    <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1.5rem 0' }}>Has levantado un aproximado de <strong>{getDayTotalKg(day)} kg</strong> hasta ahora en este día.</p>
                     <button 
                       className="btn-primary" 
                       disabled={savingWorkout}
@@ -573,28 +618,34 @@ function RoutineViewer() {
             </div>
             
             <div style={{ padding: '1.5rem', overflowY: 'auto' }}>
-              {infoModal.media && infoModal.media[0]?.url ? (
-                <div style={{ marginBottom: '1.5rem', borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: '#000', display: 'flex', justifyContent: 'center' }}>
-                  {(() => {
-                    const url = infoModal.media[0].url;
-                    const isVideo = url.match(/\.(mp4|webm|mov|ogg)$/i) || url.includes("cloudinary") && !url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
+              {infoModal.media && infoModal.media.length > 0 && infoModal.media.some((m: any) => m.url) ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                  {infoModal.media.filter((m: any) => m.url).map((mediaItem: any, index: number) => {
+                    const url = mediaItem.url;
+                    const isVideo = url.match(/\.(mp4|webm|mov|ogg)$/i) || (url.includes("cloudinary") || url.includes("r2.dev")) && !url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
                     const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)$/i);
                     const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
 
-                    if (isYouTube) {
-                      return (
-                        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, width: '100%' }}>
-                          <iframe src={getEmbedUrl(url)} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} allowFullScreen title={infoModal.exercise_name}></iframe>
-                        </div>
-                      );
-                    } else if (isImage) {
-                      return <img src={url} alt={infoModal.exercise_name} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} />;
-                    } else if (isVideo || url.includes("cloudinary")) {
-                      return <video src={url} controls style={{ maxWidth: '100%', maxHeight: '400px' }}></video>;
-                    } else {
-                      return <a href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-blue)', padding: '2rem', display: 'block' }}>Abrir enlace multimedia</a>;
-                    }
-                  })()}
+                    return (
+                      <div key={index} style={{ borderRadius: '0.5rem', overflow: 'hidden', backgroundColor: '#000', display: 'flex', justifyContent: 'center' }}>
+                        {(() => {
+                          if (isYouTube) {
+                            return (
+                              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, width: '100%' }}>
+                                <iframe src={getEmbedUrl(url)} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} allowFullScreen title={`${infoModal.exercise_name} - ${index + 1}`}></iframe>
+                              </div>
+                            );
+                          } else if (isImage) {
+                            return <img src={url} alt={`${infoModal.exercise_name} - ${index + 1}`} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} />;
+                          } else if (isVideo || url.includes("cloudinary") || url.includes("r2.dev")) {
+                            return <video src={url} controls style={{ maxWidth: '100%', maxHeight: '400px', width: '100%' }}></video>;
+                          } else {
+                            return <a href={url} target="_blank" rel="noreferrer" style={{ color: 'var(--neon-blue)', padding: '2rem', display: 'block' }}>Abrir enlace multimedia {index + 1}</a>;
+                          }
+                        })()}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--surface-hover)', borderRadius: '0.5rem', marginBottom: '1.5rem', border: '1px dashed var(--border)' }}>
