@@ -314,7 +314,7 @@ export default function RoutineBuilder({
                 ...d, exercises: [...d.exercises, {
                   id: newId,
                   exercise_id: exercises.length > 0 ? exercises[0].id : "",
-                  sets: [{ id: uuidv4(), reps: "10", rpe: 8, weight: 0, type: "Top" }]
+                  sets: [{ id: uuidv4(), reps: "10", rpe: 8, weight: 0, type: "Normal" }]
                 }]
               };
             }
@@ -363,7 +363,7 @@ export default function RoutineBuilder({
                         reps: lastSet ? lastSet.reps : "10", 
                         rpe: lastSet ? lastSet.rpe : 8, 
                         weight: lastSet ? lastSet.weight : 0, 
-                        type: "Back" 
+                        type: "Normal" 
                       }]
                     };
                   }
