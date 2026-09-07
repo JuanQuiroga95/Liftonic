@@ -909,6 +909,7 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Peso:</span> <strong>{anamnesis.current_weight ? `${anamnesis.current_weight} kg` : '-'}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Altura:</span> <strong>{anamnesis.height ? `${anamnesis.height} cm` : '-'}</strong></div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Nutricionista:</span> <strong>{anamnesis.sees_nutritionist ? 'Sí' : 'No'}</strong></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--foreground-muted)' }}>Horas de sueño:</span> <strong>{anamnesis.sleep_hours ? `${anamnesis.sleep_hours} hs` : '-'}</strong></div>
           </div>
         </div>
 
@@ -920,6 +921,10 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
               <span style={{ color: 'var(--foreground-muted)' }}>Objetivo principal:</span> 
               <span style={{ backgroundColor: 'var(--surface)', padding: '0.5rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>{anamnesis.training_goal || '-'}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+              <span style={{ color: 'var(--foreground-muted)' }}>Metas específicas:</span>
+              <span style={{ backgroundColor: 'var(--surface)', padding: '0.5rem', borderRadius: '0.5rem', fontSize: '0.875rem' }}>{anamnesis.specific_goals || '-'}</span>
             </div>
           </div>
         </div>
@@ -942,6 +947,18 @@ function ProfileViewer({ anamnesis }: { anamnesis: any }) {
             <div>
               <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Otras actividades:</span>
               <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.other_activities || 'Ninguna'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Trabajo u oficio:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.occupation || 'Sin datos'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Enfermedades de base:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem', color: anamnesis.medical_conditions ? '#ff4d4d' : 'inherit' }}>{anamnesis.medical_conditions || 'Ninguna'}</p>
+            </div>
+            <div>
+              <span style={{ color: 'var(--foreground-muted)', display: 'block', marginBottom: '0.25rem' }}>Seguimiento con la alimentación:</span>
+              <p style={{ fontSize: '0.875rem', backgroundColor: 'var(--surface)', padding: '0.75rem', borderRadius: '0.5rem' }}>{anamnesis.nutrition_tracking || '-'}</p>
             </div>
           </div>
         </div>

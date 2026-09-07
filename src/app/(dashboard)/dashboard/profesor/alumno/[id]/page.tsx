@@ -570,6 +570,18 @@ export default function StudentDetailView() {
                       <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Preferencia de División</h4>
                       <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.split_preference || '-'}</p>
                     </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Trabajo u Oficio</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.occupation || '-'}</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Horas de Sueño</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.sleep_hours ? `${form.sleep_hours} hs` : '-'}</p>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Nutricionista</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.sees_nutritionist ? 'Sí' : 'No'}</p>
+                    </div>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Intereses Musculares</h4>
                       <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.muscle_interests || '-'}</p>
@@ -577,6 +589,18 @@ export default function StudentDetailView() {
                     <div style={{ gridColumn: '1 / -1' }}>
                       <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Preferencias de Ejercicios</h4>
                       <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.exercise_preferences || '-'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Enfermedades de Base</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.medical_conditions || 'Ninguna'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Metas / Objetivos Específicos</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.specific_goals || '-'}</p>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Seguimiento con la Alimentación</h4>
+                      <p style={{ margin: 0, color: 'var(--foreground)' }}>{form.nutrition_tracking || '-'}</p>
                     </div>
                     <div style={{ gridColumn: '1 / -1' }}>
                       <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Comentarios Adicionales</h4>

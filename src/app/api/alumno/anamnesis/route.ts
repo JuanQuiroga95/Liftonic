@@ -18,15 +18,17 @@ export async function POST(request: Request) {
 
     const q = `
       INSERT INTO anamnesis (
-        user_id, training_experience, other_activities, injuries_conditions, 
-        weekly_frequency, muscle_interests, exercise_preferences, training_goal, 
-        sees_nutritionist, current_weight, height, age, split_preference, additional_comments, is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, true)
+        user_id, training_experience, other_activities, occupation, injuries_conditions, medical_conditions,
+        weekly_frequency, muscle_interests, exercise_preferences, training_goal, specific_goals,
+        sees_nutritionist, nutrition_tracking, sleep_hours, current_weight, height, age,
+        split_preference, additional_comments, is_active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, true)
     `;
     const values = [
-      userId, body.training_experience, body.other_activities, body.injuries_conditions,
-      body.weekly_frequency, body.muscle_interests, body.exercise_preferences, body.training_goal,
-      body.sees_nutritionist, body.current_weight, body.height, body.age, body.split_preference, body.additional_comments
+      userId, body.training_experience, body.other_activities, body.occupation, body.injuries_conditions, body.medical_conditions,
+      body.weekly_frequency, body.muscle_interests, body.exercise_preferences, body.training_goal, body.specific_goals,
+      body.sees_nutritionist, body.nutrition_tracking, body.sleep_hours, body.current_weight, body.height, body.age,
+      body.split_preference, body.additional_comments
     ];
 
     await query(q, values);
