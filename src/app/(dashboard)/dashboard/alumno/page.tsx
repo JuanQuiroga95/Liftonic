@@ -5,6 +5,8 @@ import AnamnesisForm from "@/components/forms/AnamnesisForm";
 import LogoutButton from "@/components/ui/LogoutButton";
 import Confetti from 'react-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signOut } from "next-auth/react";
+import { Dumbbell, TrendingUp, ChartColumn, User, LogOut, Flame, CalendarDays, CircleCheck, CirclePlay, Check, ChevronDown, CircleHelp } from 'lucide-react';
 
 const getStreakInfo = (weeks: number) => {
   if (weeks >= 48) return { icon: '👑', label: 'Leyenda', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' };
@@ -18,11 +20,17 @@ const getStreakInfo = (weeks: number) => {
   return { icon: '🌱', label: 'Semilla', color: 'var(--foreground-muted)', bg: 'var(--surface-hover)' };
 };
 
+const NAV_TABS = [
+  { id: "entreno", label: "Entreno", Icon: Dumbbell },
+  { id: "progreso", label: "Progreso", Icon: TrendingUp },
+  { id: "metricas", label: "Métricas", Icon: ChartColumn },
+  { id: "perfil", label: "Perfil", Icon: User },
+];
+
 export default function AlumnoDashboard() {
   const [anamnesis, setAnamnesis] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("entreno");
   const [progress, setProgress] = useState<any>(null);
 
@@ -66,116 +74,101 @@ export default function AlumnoDashboard() {
     }
   };
 
+  const changeTab = (id: string) => {
+    setActiveTab(id);
+    // body is the scroll container (html/body height: 100%), window as fallback
+    document.body.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleLogout = () => signOut({ callbackUrl: '/login' });
+
+  const firstName = profile?.name?.split(' ')[0] || '';
+  const initial = (firstName[0] || '?').toUpperCase();
   const streakInfo = progress ? getStreakInfo(progress.streak || 0) : null;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--background)' }}>
-      {/* Sidebar */}
-      <div style={{ 
-        width: sidebarOpen ? '250px' : '60px', 
-        backgroundColor: 'var(--surface)', 
-        borderRight: '1px solid var(--border)', 
-        transition: 'width 0.3s ease',
-        display: 'flex', 
-        flexDirection: 'column',
-        position: 'relative',
-        zIndex: 100
-      }}>
-        {/* Toggle Button */}
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)} 
-          style={{ 
-            background: 'none', border: 'none', color: 'var(--neon-fuchsia)', 
-            padding: '1rem', cursor: 'pointer', textAlign: sidebarOpen ? 'right' : 'center',
-            fontSize: '1.2rem', fontWeight: 'bold', borderBottom: '1px solid var(--surface-hover)'
-          }}
-        >
-          {sidebarOpen ? '✕' : '☰'}
-        </button>
-
-        {/* Navigation Items */}
-        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem 0' }}>
-          {[
-            { id: "entreno", icon: "💪", label: "Entreno", color: "var(--neon-fuchsia)" },
-            { id: "progreso", icon: "📈", label: "Progreso", color: "var(--neon-blue)" },
-            { id: "metricas", icon: "📊", label: "Métricas", color: "var(--neon-green)" },
-            { id: "perfil", icon: "👤", label: "Perfil", color: "#f59e0b" }
-          ].map(tab => (
+    <div className="app-shell">
+      {/* Sidebar (desktop): fija, siempre visible */}
+      <aside className="app-sidebar">
+        <div className="app-brand">LIFTONIC</div>
+        <nav className="app-nav">
+          {NAV_TABS.map(({ id, label, Icon }) => (
             <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id); if (window.innerWidth < 768) setSidebarOpen(false); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '1rem',
-                padding: '1rem', background: activeTab === tab.id ? 'var(--surface-hover)' : 'transparent',
-                border: 'none', borderRight: activeTab === tab.id ? `3px solid ${tab.color}` : '3px solid transparent',
-                color: activeTab === tab.id ? tab.color : 'var(--foreground-muted)',
-                cursor: 'pointer', transition: 'all 0.2s',
-                overflow: 'hidden', whiteSpace: 'nowrap'
-              }}
-              title={!sidebarOpen ? tab.label : ''}
+              key={id}
+              className={`app-nav-item${activeTab === id ? ' is-active' : ''}`}
+              onClick={() => changeTab(id)}
+              aria-current={activeTab === id ? 'page' : undefined}
             >
-              <span style={{ fontSize: '1.25rem', width: '30px', textAlign: 'center' }}>{tab.icon}</span>
-              <span style={{ opacity: sidebarOpen ? 1 : 0, transition: 'opacity 0.2s', fontWeight: 'bold' }}>{tab.label}</span>
+              <Icon size={20} strokeWidth={2} />
+              <span>{label}</span>
             </button>
           ))}
         </nav>
-
-        {/* Logout (Sidebar Bottom) */}
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--surface-hover)', textAlign: sidebarOpen ? 'left' : 'center' }}>
-          <button 
-            onClick={() => { window.location.href = '/api/auth/signout'; }} 
-            style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', padding: '0.5rem 0' }}
-            title={!sidebarOpen ? "Cerrar Sesión" : ""}
-          >
-            <span style={{ fontSize: '1.25rem', width: '30px', textAlign: 'center' }}>🚪</span>
-            <span style={{ opacity: sidebarOpen ? 1 : 0, transition: 'opacity 0.2s', fontWeight: 'bold' }}>Salir</span>
+        <div className="app-sidebar-foot">
+          <div className="app-user">
+            <span className="app-avatar">{initial}</span>
+            <span className="app-user-name">{profile?.name}</span>
+          </div>
+          <button className="app-nav-item app-logout" onClick={handleLogout}>
+            <LogOut size={20} strokeWidth={2} />
+            <span>Cerrar sesión</span>
           </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Main Content Area */}
-      <div className="pad-main" style={{ flex: 1, maxWidth: '1000px', margin: '0 auto', overflowY: 'auto' }}>
-        
-        {/* Header con Saludo y Racha */}
+      {/* Barra superior (móvil): marca + salir siempre a mano */}
+      <header className="app-topbar">
+        <div className="app-brand">LIFTONIC</div>
+        <button className="app-topbar-logout" onClick={handleLogout} aria-label="Cerrar sesión">
+          <LogOut size={18} strokeWidth={2} />
+          <span>Salir</span>
+        </button>
+      </header>
+
+      <main className="app-main">
         {profile && (
-          <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            >
-              <h1 style={{ color: 'var(--foreground)', fontSize: '2.5rem', margin: '0 0 0.5rem 0' }}>
-                ¡Hola, {profile.name.split(' ')[0]}! 👋
-              </h1>
-              <p style={{ color: 'var(--foreground-muted)', fontSize: '1.1rem', margin: 0 }}>
-                {progress?.streak > 0 
-                  ? "¡Qué bueno verte! Sigamos manteniendo esa racha." 
-                  : "Bienvenido de nuevo a tu espacio de entrenamiento."}
+          <div className="app-greeting">
+            <div style={{ minWidth: 0 }}>
+              <h1>Hola, {firstName}</h1>
+              <p>
+                {progress?.streak > 0
+                  ? "Seguimos sumando semanas. ¡Vamos!"
+                  : "Este es tu espacio de entrenamiento."}
               </p>
-            </motion.div>
-            
+            </div>
+
             {progress && streakInfo && (
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                style={{ 
-                  display: 'flex', alignItems: 'center', gap: '0.5rem', 
-                  backgroundColor: streakInfo.bg, 
-                  padding: '0.75rem 1.25rem', borderRadius: '2rem', 
-                  border: `1px solid ${streakInfo.color === 'var(--foreground-muted)' ? 'var(--border)' : streakInfo.color}` 
-                }}
-              >
-                <span style={{ fontSize: '1.5rem' }}>{streakInfo.icon}</span>
+              <div className="app-streak" style={{ borderColor: streakInfo.color === 'var(--foreground-muted)' ? 'var(--border)' : streakInfo.color }}>
+                <Flame size={18} strokeWidth={2.25} color={streakInfo.color === 'var(--foreground-muted)' ? 'currentColor' : streakInfo.color} />
                 <div>
-                  <div style={{ fontWeight: 'bold', color: streakInfo.color, lineHeight: 1 }}>{progress.streak || 0} Semanas</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>{streakInfo.label}</div>
+                  <strong>{progress.streak || 0} {progress.streak === 1 ? 'semana' : 'semanas'}</strong>
+                  <span>Racha · {streakInfo.label}</span>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         )}
 
-        <div className="pad-card" style={{ backgroundColor: 'var(--surface-hover)', borderRadius: '1rem', border: '1px solid var(--border)', minHeight: '80vh' }}>
+        <div className="app-panel">
           {renderTabContent()}
         </div>
-      </div>
+      </main>
+
+      {/* Tab bar inferior (móvil) */}
+      <nav className="app-tabbar" aria-label="Secciones">
+        {NAV_TABS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            className={`app-tab${activeTab === id ? ' is-active' : ''}`}
+            onClick={() => changeTab(id)}
+            aria-current={activeTab === id ? 'page' : undefined}
+          >
+            <Icon size={22} strokeWidth={2} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
@@ -368,15 +361,18 @@ function RoutineViewer() {
   const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const todayName = daysOfWeek[new Date().getDay()];
   
-  let todayMessage = "😴 Hoy descansamos";
+  let todayLabel = "Hoy toca descanso";
+  let todayDetail = "";
   let todayRoutine: any = null;
   if (activeWeek && activeWeek.days) {
     todayRoutine = activeWeek.days.find((d: any) => d.day_name.toLowerCase().includes(todayName.toLowerCase()));
     if (todayRoutine) {
-      todayMessage = `💪 Hoy tenés gym: ${todayRoutine.day_name}`;
+      todayLabel = "Hoy entrenás";
+      todayDetail = todayRoutine.day_name;
     } else if (activeWeek.days.length > 0) {
       todayRoutine = activeWeek.days.find((d: any) => !isDayAlreadySaved(d)) || activeWeek.days[0];
-      todayMessage = `📅 Próximo entreno en tu rutina: ${todayRoutine.day_name}`;
+      todayLabel = "Próximo entreno";
+      todayDetail = todayRoutine.day_name;
     }
   }
 
@@ -458,69 +454,76 @@ function RoutineViewer() {
         )}
       </AnimatePresence>
 
-      <div className="mobile-wrap" style={{ justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div>
-          <h2 style={{ margin: 0, color: 'var(--foreground)', fontSize: '1.5rem' }}>{routine.title}</h2>
-          <span style={{ color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{routine.weeks?.length} sem. Creado: {new Date(routine.start_date).toLocaleDateString()}</span>
+      <div className="rt-head">
+        <div style={{ minWidth: 0 }}>
+          <span className="rt-eyebrow">Tu rutina</span>
+          <h2>{routine.title}</h2>
+          <span className="rt-meta">
+            {routine.weeks?.length} {routine.weeks?.length === 1 ? 'semana' : 'semanas'} · desde {new Date(routine.start_date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+          </span>
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'rgba(0, 229, 255, 0.1)', border: '1px solid var(--neon-blue)', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem', color: 'var(--neon-blue)', fontWeight: 'bold' }}>
-        {todayMessage}
+      <div className="rt-today">
+        <CalendarDays size={20} strokeWidth={2} />
+        <div style={{ minWidth: 0 }}>
+          <span>{todayLabel}</span>
+          {todayDetail && <strong>{todayDetail}</strong>}
+        </div>
       </div>
 
       {/* Week Selector Scroll */}
-      <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '1rem', marginBottom: '1.5rem', scrollbarWidth: 'none' }}>
-        {routine.weeks?.map((week: any, idx: number) => (
-          <button 
-            key={week.id} 
-            onClick={() => setActiveWeekIndex(idx)}
-            style={{ 
-              minWidth: '70px', padding: '0.75rem', borderRadius: '0.5rem', 
-              backgroundColor: idx === activeWeekIndex ? 'var(--surface-hover)' : 'var(--background)',
-              border: `1px solid ${idx === activeWeekIndex ? 'var(--foreground)' : 'var(--border)'}`,
-              color: idx === activeWeekIndex ? 'var(--foreground)' : 'var(--foreground-muted)',
-              cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s'
-            }}
-          >
-            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Sem</div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{week.week_number}</div>
-          </button>
-        ))}
-      </div>
+      {routine.weeks?.length > 1 && (
+        <div className="rt-weeks" role="tablist" aria-label="Semanas">
+          {routine.weeks?.map((week: any, idx: number) => (
+            <button
+              key={week.id}
+              role="tab"
+              aria-selected={idx === activeWeekIndex}
+              className={`rt-week${idx === activeWeekIndex ? ' is-active' : ''}`}
+              onClick={() => setActiveWeekIndex(idx)}
+            >
+              Semana {week.week_number}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Active Week Days */}
       {activeWeek && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {activeWeek.days?.map((day: any) => (
-            <div key={day.id} style={{ backgroundColor: 'var(--background)', borderRadius: '1rem', border: '1px solid var(--border)', overflow: 'hidden' }}>
-              <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--surface-hover)' }}>
-                <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', backgroundColor: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', fontSize: '1.2rem' }}>
-                  {isDayAlreadySaved(day) || isDayCompleted(day) ? '✅' : '💪'}
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{day.day_name}</h3>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--foreground-muted)' }}>{day.exercises?.length || 0} ejercicios</span>
+            <section key={day.id} className="rt-day">
+              <div className="rt-day-head">
+                <span className={`rt-day-icon${isDayAlreadySaved(day) || isDayCompleted(day) ? ' is-done' : ''}`}>
+                  {isDayAlreadySaved(day) || isDayCompleted(day) ? <Check size={18} strokeWidth={3} /> : <Dumbbell size={18} strokeWidth={2} />}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <h3>{day.day_name}</h3>
+                  <span>{day.exercises?.length || 0} ejercicios</span>
                 </div>
               </div>
 
-              <div style={{ padding: '1rem' }}>
+              <div className="rt-day-body">
                 {isDayAlreadySaved(day) ? (
-                  <div style={{ backgroundColor: 'rgba(0, 255, 136, 0.1)', border: '1px solid var(--neon-green)', padding: '2rem', borderRadius: '1rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-                    <h4 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0', fontSize: '1.25rem', textTransform: 'uppercase' }}>Entrenamiento Listo</h4>
-                    <p style={{ color: 'var(--foreground-muted)', margin: 0, fontSize: '1rem' }}>Este día ya fue guardado en tu progreso histórico.</p>
+                  <div className="rt-saved">
+                    <CircleCheck size={40} strokeWidth={1.75} />
+                    <h4>Entrenamiento listo</h4>
+                    <p>Este día ya quedó guardado en tu progreso.</p>
                   </div>
                 ) : (
                   <>
-                    <div className="wk-help">
-                      <span><b>Objetivo:</b> lo que te indicó tu profe</span>
-                      <span><b>Peso usado:</b> lo que levantaste (editalo con − / +)</span>
-                      <span><b>RPE:</b> esfuerzo 1–10 · RPE 8 ≈ te quedan 2 reps</span>
-                      {day.exercises?.some((e: any) => e.sets?.some((s: any) => s.type === 'Top' || s.type === 'Back')) && (
-                        <span><b>Top</b> = serie más pesada · <b>Back</b> = series de descarga</span>
-                      )}
-                    </div>
+                    <details className="wk-help">
+                      <summary><CircleHelp size={16} strokeWidth={2} /> Cómo leer tu rutina</summary>
+                      <ul>
+                        <li><b>Objetivo:</b> repeticiones y esfuerzo que te indicó tu profe.</li>
+                        <li><b>Peso usado:</b> lo que levantaste. Ajustalo con − / + (2,5 kg).</li>
+                        <li><b>RPE:</b> esfuerzo del 1 al 10. RPE 8 ≈ te quedan 2 repeticiones.</li>
+                        {day.exercises?.some((e: any) => e.sets?.some((s: any) => s.type === 'Top' || s.type === 'Back')) && (
+                          <li><b>Top</b> = serie más pesada · <b>Back</b> = series de descarga, con menos peso.</li>
+                        )}
+                      </ul>
+                    </details>
 
                     <motion.div
                       className="wk-list"
@@ -540,7 +543,7 @@ function RoutineViewer() {
                             className={`wk-card${isExpanded ? ' is-open' : ''}${allDone ? ' is-done' : ''}`}
                           >
                             <button className="wk-card-head" onClick={() => toggleExercise(ex.id)} aria-expanded={isExpanded}>
-                              <span className="wk-num">{allDone ? '✓' : exIdx + 1}</span>
+                              <span className="wk-num">{allDone ? <Check size={16} strokeWidth={3} /> : exIdx + 1}</span>
                               <span className="wk-title">
                                 <span className="wk-name">{ex.exercise_name}</span>
                                 <span className="wk-summary">
@@ -550,14 +553,14 @@ function RoutineViewer() {
                                 </span>
                               </span>
                               <span className="wk-progress"><strong>{doneCount}/{sets.length}</strong>series</span>
-                              <span className="wk-chevron">▼</span>
+                              <ChevronDown className="wk-chevron" size={18} strokeWidth={2} />
                             </button>
                             <div className="wk-bar"><span style={{ width: sets.length ? `${(doneCount / sets.length) * 100}%` : '0%' }} /></div>
 
                             {isExpanded && (
                               <div className="wk-body">
                                 <div className="wk-body-actions">
-                                  <button className="wk-info-btn" onClick={() => setInfoModal(ex)}>▶ Ver técnica</button>
+                                  <button className="wk-info-btn" onClick={() => setInfoModal(ex)}><CirclePlay size={15} strokeWidth={2} /> Ver técnica</button>
                                 </div>
 
                                 {sets.map((set: any, sIdx: number) => {
@@ -627,7 +630,7 @@ function RoutineViewer() {
                                         aria-label={done ? `Desmarcar serie ${sIdx + 1}` : `Completar serie ${sIdx + 1}`}
                                         title={done ? 'Serie completada' : 'Marcar como completada'}
                                       >
-                                        ✓
+                                        <Check size={22} strokeWidth={3} />
                                       </button>
                                     </div>
                                   );
@@ -666,7 +669,7 @@ function RoutineViewer() {
                   </>
                 )}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}
@@ -798,7 +801,7 @@ function ProgressViewer() {
     <div>
       <h2 style={{ color: 'var(--neon-blue)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tu Progreso</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--neon-pink)' }}>{progress.trainedDays || 0}</div>
           <div style={{ color: 'var(--foreground)' }}>Días Entrenados</div>
@@ -914,7 +917,7 @@ function MetricsViewer() {
     <div>
       <h2 style={{ color: 'var(--neon-green)', marginBottom: '1.5rem', fontSize: '1.5rem' }}>Tus Métricas y Récords</h2>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(250px, 100%), 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {topMetrics.map(m => (
           <div key={m.exercise} style={{ backgroundColor: 'var(--surface-hover)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
             <h3 style={{ fontSize: '1rem', color: 'var(--foreground)', marginBottom: '0.5rem' }}>{m.exercise}</h3>
