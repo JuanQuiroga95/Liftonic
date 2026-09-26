@@ -13,14 +13,16 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { username, password, name } = body;
+    const username = String(body.username ?? '').trim();
+    const password = String(body.password ?? '').trim();
+    const name = String(body.name ?? '').trim();
 
     if (!username || !password || !name) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
     }
 
     // Comprobar si el usuario ya existe
-    const existingUser = await query('SELECT id FROM users WHERE username = $1', [username]);
+    const existingUser = await query('SELECT id FROM users WHERE LOWER(TRIM(username)) = LOWER($1)', [username]);
     if (existingUser.rows.length > 0) {
       return NextResponse.json({ error: 'El nombre de usuario ya está en uso' }, { status: 409 });
     }

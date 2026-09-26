@@ -189,6 +189,7 @@ function RoutineViewer() {
   // Gamification States
   const [completedSets, setCompletedSets] = useState<Record<string, boolean>>({});
   const [setWeights, setSetWeights] = useState<Record<string, number>>({});
+  const [setRpes, setSetRpes] = useState<Record<string, string>>({});
   const [showConfetti, setShowConfetti] = useState(false);
   const [prEvent, setPrEvent] = useState<{ exercise: string, weight: number } | null>(null);
   const [celebrationEvent, setCelebrationEvent] = useState<{ trainedDays: number } | null>(null);
@@ -203,6 +204,9 @@ function RoutineViewer() {
       
       const savedWeights = localStorage.getItem('liftonic_setWeights');
       if (savedWeights) setSetWeights(JSON.parse(savedWeights));
+
+      const savedRpes = localStorage.getItem('liftonic_setRpes');
+      if (savedRpes) setSetRpes(JSON.parse(savedRpes));
     } catch (e) {
       console.error('Error loading from local storage', e);
     }
@@ -236,17 +240,40 @@ function RoutineViewer() {
     setExpandedExercises(prev => ({ ...prev, [exId]: !prev[exId] }));
   };
 
-  const getPillColor = (index: number) => {
-    const colors = ['rgba(255, 0, 128, 0.2)', 'rgba(0, 229, 255, 0.2)', 'rgba(0, 255, 136, 0.2)', 'rgba(245, 158, 11, 0.2)'];
-    const borders = ['var(--neon-pink)', 'var(--neon-blue)', 'var(--neon-green)', '#f59e0b'];
-    return { bg: colors[index % colors.length], border: borders[index % borders.length] };
+  const toNumber = (v: any) => {
+    const n = typeof v === 'number' ? v : parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
   };
 
-  const summarizeSets = (sets: any[]) => {
-    if (!sets || sets.length === 0) return "";
-    const summary = sets.map(s => `${s.reps} @${s.rpe}`).join(" + ");
-    return summary.length > 20 ? `${sets.length} series` : summary;
+  // "10-12" or "10 al fallo" -> 10 (lower bound, used for volume estimates)
+  const parseReps = (reps: any) => {
+    const m = String(reps ?? '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : 0;
   };
+
+  const formatKg = (kg: number) => (Number.isInteger(kg) ? String(kg) : kg.toFixed(1));
+
+  const formatRange = (values: number[], suffix = '') => {
+    if (values.length === 0) return '';
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    return min === max ? `${formatKg(min)}${suffix}` : `${formatKg(min)}–${formatKg(max)}${suffix}`;
+  };
+
+  // Compact chips describing the whole exercise: "3 series", "8-10 reps", "RPE 7–8", "60 kg"
+  const summarizeExercise = (sets: any[]) => {
+    if (!sets || sets.length === 0) return [];
+    const reps = Array.from(new Set(sets.map(s => String(s.reps ?? '').trim()).filter(Boolean)));
+    const rpes = sets.map(s => toNumber(s.rpe)).filter(n => n > 0);
+    const weights = sets.map(s => toNumber(s.weight)).filter(n => n > 0);
+    const chips: { text: string, kg?: boolean }[] = [{ text: `${sets.length} ${sets.length === 1 ? 'serie' : 'series'}` }];
+    if (reps.length) chips.push({ text: `${reps.length <= 2 ? reps.join(' / ') : formatRange(reps.map(parseReps))} reps` });
+    if (rpes.length) chips.push({ text: `RPE ${formatRange(rpes)}` });
+    if (weights.length) chips.push({ text: formatRange(weights, ' kg'), kg: true });
+    return chips;
+  };
+
+  const getSetWeight = (set: any) => setWeights[set.id] ?? toNumber(set.weight);
 
   const handleCheckSet = (ex: any, set: any, isChecked: boolean) => {
     setCompletedSets(prev => {
@@ -256,7 +283,7 @@ function RoutineViewer() {
     });
     
     if (isChecked) {
-      const currentWeight = setWeights[set.id] || set.weight;
+      const currentWeight = getSetWeight(set);
       const exMetrics = metrics.find(m => m.exercise === ex.exercise_name);
       const prevMax = exMetrics?.pr || set.weight; 
       
@@ -272,10 +299,21 @@ function RoutineViewer() {
     }
   };
 
-  const updateSetWeight = (setId: string, value: number) => {
+  // null clears the override so the prescribed weight shows again
+  const updateSetWeight = (setId: string, value: number | null) => {
     setSetWeights(prev => {
-      const updated = { ...prev, [setId]: value };
+      const updated = { ...prev };
+      if (value === null || !Number.isFinite(value)) delete updated[setId];
+      else updated[setId] = Math.max(0, Math.round(value * 100) / 100);
       localStorage.setItem('liftonic_setWeights', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateSetRpe = (setId: string, value: string) => {
+    setSetRpes(prev => {
+      const updated = { ...prev, [setId]: value };
+      localStorage.setItem('liftonic_setRpes', JSON.stringify(updated));
       return updated;
     });
   };
@@ -287,7 +325,7 @@ function RoutineViewer() {
         let maxWeight = 0;
         ex.sets.forEach((set: any) => {
           if (completedSets[set.id]) {
-            const w = setWeights[set.id] || set.weight || 0;
+            const w = getSetWeight(set);
             if (w > maxWeight) maxWeight = w;
           }
         });
@@ -307,8 +345,10 @@ function RoutineViewer() {
         // Clear local storage on successful save
         localStorage.removeItem('liftonic_completedSets');
         localStorage.removeItem('liftonic_setWeights');
+        localStorage.removeItem('liftonic_setRpes');
         setCompletedSets({});
         setSetWeights({});
+        setSetRpes({});
       } else {
         alert('Hubo un error al guardar tu entrenamiento.');
       }
@@ -348,10 +388,12 @@ function RoutineViewer() {
     return allSets.some((s: any) => completedSets[s.id]);
   };
 
-  const getDayTotalKg = (day: any) => {
-    if (!day || !day.exercises) return 0;
-    const allSets = day.exercises.flatMap((e: any) => e.sets);
-    return allSets.reduce((sum: number, s: any) => sum + (setWeights[s.id] || s.weight || 0), 0);
+  // Volume = weight x reps of the sets actually completed
+  const getDayStats = (day: any) => {
+    const allSets = (day?.exercises || []).flatMap((e: any) => e.sets || []);
+    const done = allSets.filter((s: any) => completedSets[s.id]);
+    const volume = done.reduce((sum: number, s: any) => sum + getSetWeight(s) * parseReps(s.reps), 0);
+    return { total: allSets.length, done: done.length, volume: Math.round(volume) };
   };
 
   return (
@@ -471,135 +513,156 @@ function RoutineViewer() {
                   </div>
                 ) : (
                   <>
-                    <motion.div 
-                      initial="hidden" animate="show" 
-                      variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } }}
-                      style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}
+                    <div className="wk-help">
+                      <span><b>Objetivo:</b> lo que te indicó tu profe</span>
+                      <span><b>Peso usado:</b> lo que levantaste (editalo con − / +)</span>
+                      <span><b>RPE:</b> esfuerzo 1–10 · RPE 8 ≈ te quedan 2 reps</span>
+                      {day.exercises?.some((e: any) => e.sets?.some((s: any) => s.type === 'Top' || s.type === 'Back')) && (
+                        <span><b>Top</b> = serie más pesada · <b>Back</b> = series de descarga</span>
+                      )}
+                    </div>
+
+                    <motion.div
+                      className="wk-list"
+                      initial="hidden" animate="show"
+                      variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
                     >
                       {day.exercises?.map((ex: any, exIdx: number) => {
-                    const isExpanded = expandedExercises[ex.id];
-                    const color = getPillColor(exIdx);
+                        const isExpanded = !!expandedExercises[ex.id];
+                        const sets = ex.sets || [];
+                        const doneCount = sets.filter((s: any) => completedSets[s.id]).length;
+                        const allDone = sets.length > 0 && doneCount === sets.length;
 
-                    if (!isExpanded) {
-                      // Pill view
-                      return (
-                        <motion.div key={ex.id} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <button 
-                            onClick={() => toggleExercise(ex.id)}
-                            style={{ 
-                              backgroundColor: color.bg, border: `1px solid ${color.border}`, 
-                              padding: '0.5rem 1rem', borderRadius: '2rem', color: 'var(--foreground)',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                              fontSize: '0.875rem'
-                            }}
+                        return (
+                          <motion.div
+                            key={ex.id}
+                            variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
+                            className={`wk-card${isExpanded ? ' is-open' : ''}${allDone ? ' is-done' : ''}`}
                           >
-                            <strong style={{ color: color.border }}>{ex.exercise_name}</strong>
-                            <span style={{ opacity: 0.8 }}>{summarizeSets(ex.sets)}</span>
-                          </button>
-                          <button className="btn-ghost" onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', padding: 0 }}>
-                            ℹ️
+                            <button className="wk-card-head" onClick={() => toggleExercise(ex.id)} aria-expanded={isExpanded}>
+                              <span className="wk-num">{allDone ? '✓' : exIdx + 1}</span>
+                              <span className="wk-title">
+                                <span className="wk-name">{ex.exercise_name}</span>
+                                <span className="wk-summary">
+                                  {summarizeExercise(sets).map((c, i) => (
+                                    <span key={i} className={`wk-chip${c.kg ? ' kg' : ''}`}>{c.text}</span>
+                                  ))}
+                                </span>
+                              </span>
+                              <span className="wk-progress"><strong>{doneCount}/{sets.length}</strong>series</span>
+                              <span className="wk-chevron">▼</span>
+                            </button>
+                            <div className="wk-bar"><span style={{ width: sets.length ? `${(doneCount / sets.length) * 100}%` : '0%' }} /></div>
+
+                            {isExpanded && (
+                              <div className="wk-body">
+                                <div className="wk-body-actions">
+                                  <button className="wk-info-btn" onClick={() => setInfoModal(ex)}>▶ Ver técnica</button>
+                                </div>
+
+                                {sets.map((set: any, sIdx: number) => {
+                                  const done = !!completedSets[set.id];
+                                  const prescribed = toNumber(set.weight);
+                                  const current = getSetWeight(set);
+                                  const typeClass = set.type === 'Top' ? 'top' : set.type === 'Back' ? 'back' : '';
+
+                                  return (
+                                    <div key={set.id} className={`wk-set${done ? ' is-done' : ''}`}>
+                                      <div className="wk-set-idx">
+                                        <span>Serie</span>
+                                        <strong>{sIdx + 1}</strong>
+                                        {typeClass && <span className={`wk-type ${typeClass}`}>{set.type}</span>}
+                                      </div>
+
+                                      <div className="wk-target">
+                                        <span className="wk-label">Objetivo</span>
+                                        <div className="wk-target-main">
+                                          {set.reps || '—'} <small>reps</small>
+                                          {toNumber(set.rpe) > 0 && <> · <small>RPE</small> {set.rpe}</>}
+                                        </div>
+                                        <div className="wk-target-sub">
+                                          {prescribed > 0 ? `Peso sugerido: ${formatKg(prescribed)} kg` : 'Peso libre: elegí uno que te cueste'}
+                                        </div>
+                                      </div>
+
+                                      <div className="wk-inputs">
+                                        <div className="wk-field">
+                                          <span className="wk-label">Peso usado (kg)</span>
+                                          <div className="wk-stepper">
+                                            <button type="button" aria-label="Restar 2.5 kg" onClick={() => updateSetWeight(set.id, current - 2.5)}>−</button>
+                                            <input
+                                              type="number"
+                                              inputMode="decimal"
+                                              step="0.5"
+                                              min="0"
+                                              placeholder="0"
+                                              value={setWeights[set.id] ?? (prescribed > 0 ? prescribed : '')}
+                                              onChange={(e) => updateSetWeight(set.id, e.target.value === '' ? null : parseFloat(e.target.value))}
+                                              aria-label={`Peso usado en la serie ${sIdx + 1}`}
+                                            />
+                                            <button type="button" aria-label="Sumar 2.5 kg" onClick={() => updateSetWeight(set.id, current + 2.5)}>+</button>
+                                          </div>
+                                        </div>
+                                        <div className="wk-field">
+                                          <span className="wk-label">Tu RPE</span>
+                                          <input
+                                            className="wk-rpe"
+                                            type="number"
+                                            inputMode="decimal"
+                                            min="1"
+                                            max="10"
+                                            step="0.5"
+                                            placeholder="—"
+                                            value={setRpes[set.id] ?? ''}
+                                            onChange={(e) => updateSetRpe(set.id, e.target.value)}
+                                            aria-label={`RPE percibido en la serie ${sIdx + 1}`}
+                                          />
+                                        </div>
+                                      </div>
+
+                                      <button
+                                        className={`wk-check${done ? ' is-done' : ''}`}
+                                        onClick={() => handleCheckSet(ex, set, !done)}
+                                        aria-pressed={done}
+                                        aria-label={done ? `Desmarcar serie ${sIdx + 1}` : `Completar serie ${sIdx + 1}`}
+                                        title={done ? 'Serie completada' : 'Marcar como completada'}
+                                      >
+                                        ✓
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+
+                    {isDayCompleted(day) && (() => {
+                      const stats = getDayStats(day);
+                      return (
+                        <motion.div className="wk-finish" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                          <h3 style={{ color: 'var(--neon-green)', margin: '0 0 1rem 0', textAlign: 'center' }}>¡Buen trabajo! 💪</h3>
+                          <div className="wk-stats">
+                            <div><strong>{stats.done}/{stats.total}</strong><span>Series</span></div>
+                            <div><strong>{stats.volume.toLocaleString('es-AR')}</strong><span>kg volumen</span></div>
+                            <div><strong>{Math.round((stats.done / Math.max(stats.total, 1)) * 100)}%</strong><span>Completado</span></div>
+                          </div>
+                          <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1rem 0', fontSize: '0.75rem', textAlign: 'center' }}>
+                            Volumen = peso × repeticiones de las series completadas.
+                          </p>
+                          <button
+                            className="btn-primary"
+                            disabled={savingWorkout}
+                            style={{ backgroundColor: 'var(--neon-green)', color: '#000', fontWeight: '900', padding: '1rem 2rem', border: 'none', width: '100%', textTransform: 'uppercase', fontSize: '1.05rem' }}
+                            onClick={() => handleFinishWorkout(day)}
+                          >
+                            {savingWorkout ? 'Guardando...' : 'Terminar Entrenamiento'}
                           </button>
                         </motion.div>
                       );
-                    }
-
-                    // Expanded Table View
-                    return (
-                      <motion.div key={ex.id} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} style={{ width: '100%', backgroundColor: 'var(--surface)', borderRadius: '1rem', border: '1px solid var(--border)', padding: '1rem', marginTop: '0.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <h4 style={{ margin: 0, fontSize: '1.1rem', color: color.border }}>{ex.exercise_name}</h4>
-                            <button className="btn-ghost" onClick={() => setInfoModal(ex)} title="Ver instrucciones" style={{ borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', padding: 0 }}>
-                              ℹ️
-                            </button>
-                          </div>
-                            <button className="btn-ghost" onClick={() => toggleExercise(ex.id)}>Cerrar</button>
-                        </div>
-                        
-                        <div style={{ paddingBottom: '0.5rem' }}>
-                          <div className="routine-grid-header" style={{ color: 'var(--foreground-muted)', fontWeight: 'bold', marginBottom: '0.5rem', padding: '0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>
-                            <div style={{ textAlign: 'center' }}>#</div>
-                            <div style={{ textAlign: 'center' }}>Peso (kg)</div>
-                            <div style={{ textAlign: 'center' }}>Reps</div>
-                            <div style={{ textAlign: 'center' }} title="RPE Prescrito por el Profesor">Prof.</div>
-                            <div style={{ textAlign: 'center' }} title="RPE Percibido por el Alumno">Tu RPE</div>
-                            <div style={{ textAlign: 'center' }}>Tipo</div>
-                            <div style={{ textAlign: 'center' }}>✓</div>
-                          </div>
-                          
-                          {ex.sets?.map((set: any, sIdx: number) => (
-                            <div key={set.id} className="routine-grid-row" style={{ backgroundColor: 'var(--surface)', borderRadius: '0.5rem', border: `1px solid ${completedSets[set.id] ? 'var(--neon-green)' : 'var(--border)'}`, transition: 'all 0.3s', marginBottom: '0.5rem', position: 'relative', overflow: 'hidden' }}>
-                              {completedSets[set.id] && <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', backgroundColor: 'var(--neon-green)' }}></div>}
-                              
-                              <div style={{ textAlign: 'center', color: completedSets[set.id] ? 'var(--neon-green)' : 'var(--foreground-muted)', fontSize: '1rem', fontWeight: 'bold' }}>
-                                <span className="mobile-label">Serie </span>{sIdx + 1}
-                              </div>
-                              
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <span className="mobile-label">Peso (kg)</span>
-                                <div style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: '90px', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', overflow: 'hidden' }}>
-                                  <input type="number" placeholder="kg" value={setWeights[set.id] ?? set.weight} onChange={(e) => updateSetWeight(set.id, parseFloat(e.target.value))} style={{ width: '100%', padding: '0.5rem', backgroundColor: 'transparent', border: 'none', color: 'var(--foreground)', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', outline: 'none' }} />
-                                  <span style={{ padding: '0.5rem 0.5rem 0.5rem 0', color: 'var(--foreground-muted)', fontSize: '0.875rem', pointerEvents: 'none', fontWeight: 'bold' }}>kg</span>
-                                </div>
-                              </div>
-                              
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <span className="mobile-label">Reps</span>
-                                <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1rem' }}>{set.reps}</div>
-                              </div>
-                              
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <span className="mobile-label">RPE Prof.</span>
-                                <div style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--foreground-muted)', fontSize: '1rem' }}>{set.rpe}</div>
-                              </div>
-                              
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <span className="mobile-label">Tu RPE</span>
-                                <input type="number" placeholder="rpe" style={{ width: '100%', maxWidth: '60px', padding: '0.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.25rem', color: 'var(--foreground)', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold' }} />
-                              </div>
-                              
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                <span className="mobile-label">Tipo</span>
-                                <div style={{ textAlign: 'center', fontSize: '0.875rem', fontWeight: '800', textTransform: 'uppercase', color: set.type === 'Top' ? 'var(--neon-pink)' : (set.type === 'Back' ? '#f59e0b' : 'var(--neon-blue)') }}>{set.type}</div>
-                              </div>
-                              
-                              <div style={{ display: 'flex', justifyContent: 'center', padding: '0.25rem' }}>
-                                <button 
-                                  onClick={() => handleCheckSet(ex, set, !completedSets[set.id])}
-                                  style={{ 
-                                    width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s',
-                                    backgroundColor: completedSets[set.id] ? 'rgba(0, 255, 136, 0.2)' : 'var(--surface-hover)',
-                                    color: completedSets[set.id] ? 'var(--neon-green)' : 'var(--foreground)'
-                                  }}
-                                >
-                                  {completedSets[set.id] ? '✓ Lista' : 'Completar'}
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-                
-                {isDayCompleted(day) && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--neon-green)', backgroundColor: 'rgba(0, 255, 136, 0.05)', textAlign: 'center' }}
-                  >
-                    <h3 style={{ color: 'var(--neon-green)', margin: '0 0 0.5rem 0' }}>¡Buen trabajo! 💪</h3>
-                    <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1.5rem 0' }}>Has levantado un aproximado de <strong>{getDayTotalKg(day)} kg</strong> hasta ahora en este día.</p>
-                    <button 
-                      className="btn-primary" 
-                      disabled={savingWorkout}
-                      style={{ backgroundColor: 'var(--neon-green)', color: '#000', fontWeight: '900', padding: '1rem 2rem', boxShadow: '0 0 20px rgba(0,255,136,0.6)', border: 'none', width: '100%', textTransform: 'uppercase', fontSize: '1.1rem' }} 
-                      onClick={() => handleFinishWorkout(day)}
-                    >
-                      {savingWorkout ? 'Guardando...' : 'Terminar Entrenamiento'}
-                    </button>
-                  </motion.div>
-                )}
+                    })()}
                   </>
                 )}
               </div>

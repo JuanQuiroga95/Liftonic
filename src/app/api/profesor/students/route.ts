@@ -13,9 +13,16 @@ export async function POST(request: Request) {
     }
 
     const professorId = (session.user as any).id;
-    const { name, username, password } = await request.json();
+    const body = await request.json();
+    const name = String(body.name ?? '').trim();
+    const username = String(body.username ?? '').trim();
+    const password = String(body.password ?? '').trim();
 
-    const existingUser = await query('SELECT id FROM users WHERE username = $1', [username]);
+    if (!name || !username || !password) {
+      return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
+    }
+
+    const existingUser = await query('SELECT id FROM users WHERE LOWER(TRIM(username)) = LOWER($1)', [username]);
     if (existingUser.rows.length > 0) {
       return NextResponse.json({ error: 'El nombre de usuario ya está en uso' }, { status: 409 });
     }
@@ -79,17 +86,22 @@ export async function PUT(request: Request) {
     }
 
     const professorId = (session.user as any).id;
-    const { id, name, username, password } = await request.json();
+    const body = await request.json();
+    const id = body.id;
+    const name = String(body.name ?? '').trim();
+    const username = String(body.username ?? '').trim();
+    const password = String(body.password ?? '').trim();
 
     if (!id) return NextResponse.json({ error: 'Falta el ID del alumno' }, { status: 400 });
+    if (!name || !username) return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
 
     // Check if new username is taken by someone else
-    const existing = await query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, id]);
+    const existing = await query('SELECT id FROM users WHERE LOWER(TRIM(username)) = LOWER($1) AND id != $2', [username, id]);
     if (existing.rows.length > 0) {
       return NextResponse.json({ error: 'El nombre de usuario ya está en uso por otra persona' }, { status: 409 });
     }
 
-    if (password && password.trim() !== '') {
+    if (password !== '') {
       const passwordHash = await bcrypt.hash(password, 10);
       await query(
         'UPDATE users SET name = $1, username = $2, password_hash = $3 WHERE id = $4 AND professor_id = $5 AND role = $6',

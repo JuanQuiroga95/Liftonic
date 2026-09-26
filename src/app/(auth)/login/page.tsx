@@ -56,6 +56,10 @@ export default function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               className={styles.input}
               placeholder="Ej. JuanQuiroga"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              autoComplete="username"
               required
             />
           </div>

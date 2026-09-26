@@ -17,11 +17,19 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const res = await query('SELECT * FROM users WHERE username = $1', [credentials.username]);
+          // Tolerate stray spaces and mobile auto-capitalization; prefer an exact match if one exists
+          const username = credentials.username.trim();
+          const res = await query(
+            'SELECT * FROM users WHERE LOWER(TRIM(username)) = LOWER($1) ORDER BY (username = $1) DESC LIMIT 1',
+            [username]
+          );
           const user = res.rows[0];
 
           if (user) {
-            const isMatch = await bcrypt.compare(credentials.password, user.password_hash);
+            const trimmedPassword = credentials.password.trim();
+            const isMatch =
+              (await bcrypt.compare(credentials.password, user.password_hash)) ||
+              (trimmedPassword !== credentials.password && (await bcrypt.compare(trimmedPassword, user.password_hash)));
             if (isMatch) {
               return {
                 id: user.id,

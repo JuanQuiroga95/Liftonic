@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import RoutineBuilder from "./RoutineBuilder";
 import { useRouter } from "next/navigation";
 
@@ -178,6 +178,17 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Bring the form into view whenever it opens or switches to another student
+  useEffect(() => {
+    if (!showModal) return;
+    const t = setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      formRef.current?.querySelector('input')?.focus({ preventScroll: true });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [showModal, editingId]);
 
   const handleOpenCreate = () => {
     setEditingId(null);
@@ -251,7 +262,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
       </div>
 
       {showModal && (
-        <div style={{ padding: '1.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '1rem', marginBottom: '2rem' }}>
+        <div ref={formRef} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '1rem', marginBottom: '2rem', scrollMarginTop: '1rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>{editingId ? 'Editar Alumno' : 'Crear Nuevo Alumno'}</h3>
           <form onSubmit={handleSave} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div style={{ flex: '1', minWidth: '200px' }}>
@@ -260,7 +271,7 @@ function StudentManager({ students, onReload }: { students: any[], onReload: () 
             </div>
             <div style={{ flex: '1', minWidth: '200px' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>Usuario</label>
-              <input value={username} onChange={e => setUsername(e.target.value)} required style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
+              <input value={username} onChange={e => setUsername(e.target.value)} required autoCapitalize="none" autoCorrect="off" spellCheck={false} style={{ width: '100%', padding: '0.75rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--foreground)' }} />
             </div>
             <div style={{ flex: '1', minWidth: '200px' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--foreground-muted)', fontSize: '0.875rem' }}>{editingId ? 'Nueva Contraseña (opcional)' : 'Contraseña Temporal'}</label>
