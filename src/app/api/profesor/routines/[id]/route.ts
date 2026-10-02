@@ -2,12 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { query } from '@/lib/db';
-
-// Descanso en segundos (null = sin temporizador)
-const toRest = (v: any) => {
-  const n = parseInt(v, 10);
-  return Number.isFinite(n) && n > 0 ? Math.min(n, 900) : null;
-};
+import { toRest } from '@/lib/rest';
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
+import { REST_OPTIONS, formatRest } from '@/lib/rest';
 
 type ExerciseSet = {
   id: string;
@@ -17,17 +18,6 @@ type ExerciseBlock = {
   sets: ExerciseSet[];
   rest_seconds?: number | null;
   rest_after_seconds?: number | null;
-};
-
-// Opciones de descanso (en segundos). 0 = sin temporizador
-const REST_OPTIONS = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
-
-const formatRest = (sec?: number | null) => {
-  if (!sec) return 'Sin descanso';
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  if (m === 0) return `${s} seg`;
-  return s ? `${m}:${String(s).padStart(2, '0')} min` : `${m} min`;
 };
 
 type RoutineDay = {

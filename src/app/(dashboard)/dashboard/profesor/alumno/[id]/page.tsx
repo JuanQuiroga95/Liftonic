@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import RoutineBuilder from "../../RoutineBuilder";
+import { REST_OPTIONS, formatRest } from "@/lib/rest";
 
 export default function StudentDetailView() {
   const router = useRouter();
@@ -99,16 +100,30 @@ export default function StudentDetailView() {
     });
   };
 
+  // Descansos del ejercicio (rest_seconds / rest_after_seconds)
+  const handleExerciseChange = (exId: string, field: string, value: any) => {
+    setRoutine((prev: any) => ({
+      ...prev,
+      weeks: prev.weeks.map((week: any) => ({
+        ...week,
+        days: week.days.map((day: any) => ({
+          ...day,
+          exercises: day.exercises.map((ex: any) => ex.id === exId ? { ...ex, [field]: value } : ex)
+        }))
+      }))
+    }));
+  };
+
   const handleSaveSets = async (dailyExerciseId: string, exId: string) => {
     setSavingEx(exId);
     try {
-      // Find the sets to save
-      let setsToSave = [];
+      // Find the exercise to save
+      let exToSave: any = null;
       for (const week of routine.weeks) {
         for (const day of week.days) {
           for (const ex of day.exercises) {
             if (ex.id === exId) {
-              setsToSave = ex.sets;
+              exToSave = ex;
             }
           }
         }
@@ -117,7 +132,11 @@ export default function StudentDetailView() {
       const res = await fetch(`/api/profesor/routines/sets/${dailyExerciseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sets: setsToSave })
+        body: JSON.stringify({
+          sets: exToSave?.sets || [],
+          rest_seconds: exToSave?.rest_seconds ?? null,
+          rest_after_seconds: exToSave?.rest_after_seconds ?? null
+        })
       });
 
       if (res.ok) {
@@ -370,6 +389,22 @@ export default function StudentDetailView() {
                                       </div>
                                     </div>
                                   ))}
+                                </div>
+
+                                {/* Descansos: arrancan solos cuando el alumno marca la serie */}
+                                <div className="builder-rest">
+                                  <label>
+                                    <span>⏱️ Descanso entre series</span>
+                                    <select value={ex.rest_seconds ?? 0} onChange={e => handleExerciseChange(ex.id, 'rest_seconds', parseInt(e.target.value, 10) || null)}>
+                                      {REST_OPTIONS.map(sec => <option key={sec} value={sec}>{formatRest(sec)}</option>)}
+                                    </select>
+                                  </label>
+                                  <label>
+                                    <span>⏭️ Descanso al terminar el ejercicio</span>
+                                    <select value={ex.rest_after_seconds ?? 0} onChange={e => handleExerciseChange(ex.id, 'rest_after_seconds', parseInt(e.target.value, 10) || null)}>
+                                      {REST_OPTIONS.map(sec => <option key={sec} value={sec}>{formatRest(sec)}</option>)}
+                                    </select>
+                                  </label>
                                 </div>
                               </div>
                             );
