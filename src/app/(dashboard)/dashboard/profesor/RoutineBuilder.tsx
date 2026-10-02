@@ -15,6 +15,19 @@ type ExerciseBlock = {
   id: string;
   exercise_id: string;
   sets: ExerciseSet[];
+  rest_seconds?: number | null;
+  rest_after_seconds?: number | null;
+};
+
+// Opciones de descanso (en segundos). 0 = sin temporizador
+const REST_OPTIONS = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300];
+
+const formatRest = (sec?: number | null) => {
+  if (!sec) return 'Sin descanso';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m === 0) return `${s} seg`;
+  return s ? `${m}:${String(s).padStart(2, '0')} min` : `${m} min`;
 };
 
 type RoutineDay = {
@@ -314,7 +327,9 @@ export default function RoutineBuilder({
                 ...d, exercises: [...d.exercises, {
                   id: newId,
                   exercise_id: exercises.length > 0 ? exercises[0].id : "",
-                  sets: [{ id: uuidv4(), reps: "10", rpe: 8, weight: 0, type: "Normal" }]
+                  sets: [{ id: uuidv4(), reps: "10", rpe: 8, weight: 0, type: "Normal" }],
+                  rest_seconds: 90,
+                  rest_after_seconds: 120
                 }]
               };
             }
@@ -604,7 +619,7 @@ export default function RoutineBuilder({
                               <button style={{ background: 'none', border: 'none', color: 'var(--foreground)', cursor: 'pointer', fontSize: '1rem', padding: 0 }}>
                                 {isExExpanded ? '▼' : '▶'}
                               </button>
-                              <span style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1} {!isExExpanded && `- ${ex.sets.length} series`}</span>
+                              <span style={{ fontSize: '0.875rem', color: 'var(--foreground-muted)' }}>Ejercicio {eIndex + 1} {!isExExpanded && `- ${ex.sets.length} series${ex.rest_seconds ? ` · descanso ${formatRest(ex.rest_seconds)}` : ''}`}</span>
                             </div>
                             <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                               {eIndex > 0 && (
@@ -673,6 +688,22 @@ export default function RoutineBuilder({
                                 <button className="btn-ghost" onClick={() => addSet(week.id, day.id, ex.id)} style={{ width: '100%', borderTop: '1px dashed var(--border)', borderRadius: 0, padding: '0.75rem' }}>
                                   + Añadir Serie
                                 </button>
+                              </div>
+
+                              {/* Descansos: arrancan solos cuando el alumno marca la serie */}
+                              <div className="builder-rest">
+                                <label>
+                                  <span>⏱️ Descanso entre series</span>
+                                  <select value={ex.rest_seconds ?? 0} onChange={e => updateExercise(week.id, day.id, ex.id, 'rest_seconds', parseInt(e.target.value, 10) || null)}>
+                                    {REST_OPTIONS.map(sec => <option key={sec} value={sec}>{formatRest(sec)}</option>)}
+                                  </select>
+                                </label>
+                                <label>
+                                  <span>⏭️ Descanso al terminar el ejercicio</span>
+                                  <select value={ex.rest_after_seconds ?? 0} onChange={e => updateExercise(week.id, day.id, ex.id, 'rest_after_seconds', parseInt(e.target.value, 10) || null)}>
+                                    {REST_OPTIONS.map(sec => <option key={sec} value={sec}>{formatRest(sec)}</option>)}
+                                  </select>
+                                </label>
                               </div>
                             </>
                           )}

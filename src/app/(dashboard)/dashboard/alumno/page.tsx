@@ -6,7 +6,65 @@ import LogoutButton from "@/components/ui/LogoutButton";
 import Confetti from 'react-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
-import { Dumbbell, TrendingUp, ChartColumn, User, LogOut, Flame, CalendarDays, CircleCheck, CirclePlay, Check, ChevronDown, CircleHelp } from 'lucide-react';
+import { Dumbbell, TrendingUp, ChartColumn, User, LogOut, Flame, CalendarDays, CircleCheck, CirclePlay, Check, ChevronDown, CircleHelp, Timer } from 'lucide-react';
+
+type RestTimerState = { endsAt: number; total: number; label: string };
+
+const REST_STORAGE_KEY = 'liftonic_restTimer';
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+const formatClock = (ms: number) => {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+
+const urlBase64ToUint8Array = (base64: string) => {
+  const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+};
+
+// Pide permiso y registra el dispositivo para recibir el aviso del descanso con la app cerrada
+const ensurePushSubscription = async () => {
+  try {
+    if (!VAPID_PUBLIC_KEY || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+    if (Notification.permission === 'denied') return;
+    if (Notification.permission === 'default' && await Notification.requestPermission() !== 'granted') return;
+
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription()
+      || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+
+    await fetch('/api/alumno/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subscription: sub.toJSON() }),
+    });
+  } catch (e) {
+    console.error('Push subscription error', e);
+  }
+};
+
+const beep = (times: number) => {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    for (let i = 0; i < times; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 880;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const t = ctx.currentTime + i * 0.3;
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.start(t);
+      osc.stop(t + 0.2);
+    }
+    setTimeout(() => ctx.close(), times * 300 + 200);
+  } catch {}
+};
 
 const getStreakInfo = (weeks: number) => {
   if (weeks >= 48) return { icon: '👑', label: 'Leyenda', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' };
@@ -217,6 +275,87 @@ function RoutineViewer() {
     setDimensions({ width: window.innerWidth, height: window.innerHeight });
   }, []);
 
+  // --- Temporizador de descanso ---
+  const [restTimer, setRestTimer] = useState<RestTimerState | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const warnedRef = useRef(false);
+
+  const saveRestTimer = (timer: RestTimerState | null) => {
+    warnedRef.current = false;
+    setRestTimer(timer);
+    setNow(Date.now());
+    try {
+      if (timer) localStorage.setItem(REST_STORAGE_KEY, JSON.stringify(timer));
+      else localStorage.removeItem(REST_STORAGE_KEY);
+    } catch {}
+  };
+
+  const stopRestTimer = () => {
+    saveRestTimer(null);
+    fetch('/api/alumno/rest-timer', { method: 'DELETE' }).catch(() => {});
+  };
+
+  // Recupera un descanso en curso si se recargó la página
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(REST_STORAGE_KEY) || 'null');
+      if (saved && saved.endsAt > Date.now()) setRestTimer(saved);
+      else localStorage.removeItem(REST_STORAGE_KEY);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!restTimer) return;
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [restTimer]);
+
+  // Aviso a los 10 segundos y al terminar (con la app abierta)
+  useEffect(() => {
+    if (!restTimer) return;
+    const left = restTimer.endsAt - now;
+    if (left <= 0) {
+      if (document.visibilityState === 'visible') {
+        navigator.vibrate?.([300, 120, 300, 120, 600]);
+        beep(3);
+      }
+      saveRestTimer(null);
+    } else if (left <= 10_000 && !warnedRef.current && restTimer.total > 15_000) {
+      warnedRef.current = true;
+      if (document.visibilityState === 'visible') {
+        navigator.vibrate?.([200, 100, 200]);
+        beep(1);
+      }
+    }
+  }, [now, restTimer]);
+
+  // Con la app en segundo plano el aviso llega por push desde el servidor
+  useEffect(() => {
+    if (!restTimer) return;
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        fetch('/api/alumno/rest-timer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endsAt: restTimer.endsAt, label: restTimer.label }),
+          keepalive: true,
+        }).catch(() => {});
+      } else {
+        fetch('/api/alumno/rest-timer', { method: 'DELETE' }).catch(() => {});
+        setNow(Date.now());
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [restTimer]);
+
+  const adjustRestTimer = (deltaMs: number) => {
+    if (!restTimer) return;
+    const endsAt = restTimer.endsAt + deltaMs;
+    if (endsAt <= Date.now()) return stopRestTimer();
+    saveRestTimer({ ...restTimer, endsAt, total: Math.max(restTimer.total, endsAt - Date.now()) });
+  };
+
   if (!routine || routine.error) return <p style={{color: 'var(--foreground-muted)', textAlign: 'center', marginTop: '2rem'}}>Tu profesor aún no te ha asignado una rutina.</p>;
 
   const activeWeek = routine.weeks?.[activeWeekIndex];
@@ -238,7 +377,7 @@ function RoutineViewer() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // "10-12" or "10 al fallo" -> 10 (lower bound, used for volume estimates)
+  // "10-12" or "10 al fallo" -> 10 (lower bound)
   const parseReps = (reps: any) => {
     const m = String(reps ?? '').match(/\d+/);
     return m ? parseInt(m[0], 10) : 0;
@@ -268,14 +407,34 @@ function RoutineViewer() {
 
   const getSetWeight = (set: any) => setWeights[set.id] ?? toNumber(set.weight);
 
-  const handleCheckSet = (ex: any, set: any, isChecked: boolean) => {
+  // Al marcar una serie arranca el descanso que configuró el profe
+  const startRestFor = (ex: any, day: any, set: any) => {
+    const sets = ex.sets || [];
+    const remaining = sets.filter((s: any) => s.id !== set.id && !completedSets[s.id]);
+    const exIdx = (day?.exercises || []).findIndex((e: any) => e.id === ex.id);
+    const nextEx = remaining.length === 0 ? day?.exercises?.[exIdx + 1] : null;
+    if (remaining.length === 0 && !nextEx) return; // último ejercicio del día
+
+    const seconds = remaining.length > 0 ? toNumber(ex.rest_seconds) : toNumber(ex.rest_after_seconds);
+    if (seconds <= 0) return;
+
+    const label = remaining.length > 0
+      ? `Próxima: serie ${sets.findIndex((s: any) => s.id === remaining[0].id) + 1} de ${ex.exercise_name}`
+      : `Próximo ejercicio: ${nextEx.exercise_name}`;
+
+    saveRestTimer({ endsAt: Date.now() + seconds * 1000, total: seconds * 1000, label });
+    ensurePushSubscription();
+  };
+
+  const handleCheckSet = (ex: any, set: any, isChecked: boolean, day?: any) => {
     setCompletedSets(prev => {
       const updated = { ...prev, [set.id]: isChecked };
       localStorage.setItem('liftonic_completedSets', JSON.stringify(updated));
       return updated;
     });
-    
+
     if (isChecked) {
+      startRestFor(ex, day, set);
       const currentWeight = getSetWeight(set);
       const exMetrics = metrics.find(m => m.exercise === ex.exercise_name);
       const prevMax = exMetrics?.pr || set.weight; 
@@ -342,6 +501,7 @@ function RoutineViewer() {
         setCompletedSets({});
         setSetWeights({});
         setSetRpes({});
+        if (restTimer) stopRestTimer();
       } else {
         alert('Hubo un error al guardar tu entrenamiento.');
       }
@@ -384,12 +544,10 @@ function RoutineViewer() {
     return allSets.some((s: any) => completedSets[s.id]);
   };
 
-  // Volume = weight x reps of the sets actually completed
   const getDayStats = (day: any) => {
     const allSets = (day?.exercises || []).flatMap((e: any) => e.sets || []);
     const done = allSets.filter((s: any) => completedSets[s.id]);
-    const volume = done.reduce((sum: number, s: any) => sum + getSetWeight(s) * parseReps(s.reps), 0);
-    return { total: allSets.length, done: done.length, volume: Math.round(volume) };
+    return { total: allSets.length, done: done.length };
   };
 
   return (
@@ -625,7 +783,7 @@ function RoutineViewer() {
 
                                       <button
                                         className={`wk-check${done ? ' is-done' : ''}`}
-                                        onClick={() => handleCheckSet(ex, set, !done)}
+                                        onClick={() => handleCheckSet(ex, set, !done, day)}
                                         aria-pressed={done}
                                         aria-label={done ? `Desmarcar serie ${sIdx + 1}` : `Completar serie ${sIdx + 1}`}
                                         title={done ? 'Serie completada' : 'Marcar como completada'}
@@ -649,12 +807,8 @@ function RoutineViewer() {
                           <h3 style={{ color: 'var(--neon-green)', margin: '0 0 1rem 0', textAlign: 'center' }}>¡Buen trabajo! 💪</h3>
                           <div className="wk-stats">
                             <div><strong>{stats.done}/{stats.total}</strong><span>Series</span></div>
-                            <div><strong>{stats.volume.toLocaleString('es-AR')}</strong><span>kg volumen</span></div>
                             <div><strong>{Math.round((stats.done / Math.max(stats.total, 1)) * 100)}%</strong><span>Completado</span></div>
                           </div>
-                          <p style={{ color: 'var(--foreground-muted)', margin: '0 0 1rem 0', fontSize: '0.75rem', textAlign: 'center' }}>
-                            Volumen = peso × repeticiones de las series completadas.
-                          </p>
                           <button
                             className="btn-primary"
                             disabled={savingWorkout}
@@ -673,6 +827,34 @@ function RoutineViewer() {
           ))}
         </div>
       )}
+
+      {/* Temporizador de descanso */}
+      <AnimatePresence>
+        {restTimer && (
+          <motion.div
+            className="rest-timer"
+            role="timer"
+            aria-live="polite"
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
+          >
+            <div className="rest-timer-bar">
+              <span style={{ width: `${Math.max(0, Math.min(100, ((restTimer.endsAt - now) / restTimer.total) * 100))}%` }} />
+            </div>
+            <div className="rest-timer-body">
+              <Timer size={22} strokeWidth={2} className={restTimer.endsAt - now <= 10_000 ? 'is-ending' : ''} />
+              <div className="rest-timer-info">
+                <strong className={restTimer.endsAt - now <= 10_000 ? 'is-ending' : ''}>{formatClock(restTimer.endsAt - now)}</strong>
+                <span>{restTimer.label}</span>
+              </div>
+              <div className="rest-timer-actions">
+                <button type="button" onClick={() => adjustRestTimer(-15_000)} aria-label="Restar 15 segundos">−15</button>
+                <button type="button" onClick={() => adjustRestTimer(15_000)} aria-label="Sumar 15 segundos">+15</button>
+                <button type="button" className="is-skip" onClick={stopRestTimer}>Saltar</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Info Modal */}
       {infoModal && (

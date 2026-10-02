@@ -801,7 +801,7 @@ a {
   border: 1px solid var(--neon-green);
   background: rgba(34, 227, 154, 0.06);
 }
-.wk-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; text-align: center; }
+.wk-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; text-align: center; }
 .wk-stats > div { background: var(--surface-hover); border-radius: 0.75rem; padding: 0.75rem 0.25rem; min-width: 0; }
 .wk-stats strong { display: block; font-size: 1.2rem; color: var(--neon-green); font-variant-numeric: tabular-nums; }
 .wk-stats span { font-size: 0.65rem; color: var(--foreground-muted); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -828,4 +828,51 @@ a {
   .wk-inputs .wk-stepper { width: 100%; }
   .wk-inputs .wk-stepper input { flex: 1; width: auto; }
   .wk-stepper button { width: 3rem; }
+}
+
+/* Descansos en el armador de rutinas */
+.builder-rest { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+.builder-rest label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; color: var(--foreground-muted); min-width: 0; }
+.builder-rest select { width: 100%; padding: 0.55rem 0.65rem; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--surface-hover); color: var(--foreground); font: inherit; font-size: 0.9rem; }
+
+/* Temporizador de descanso del alumno */
+.rest-timer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  bottom: 1.25rem;
+  z-index: 60;
+  width: min(480px, calc(100vw - 2rem));
+  background: var(--surface);
+  border: 1px solid var(--neon-green);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.rest-timer-bar { height: 4px; background: var(--surface-hover); }
+.rest-timer-bar > span { display: block; height: 100%; background: var(--neon-green); transition: width 0.25s linear; }
+.rest-timer-body { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; }
+.rest-timer-body > svg { flex-shrink: 0; color: var(--neon-green); }
+.rest-timer-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rest-timer-info strong { font-size: 1.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--neon-green); }
+.rest-timer-info span { font-size: 0.75rem; color: var(--foreground-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rest-timer .is-ending { color: var(--accent-amber); }
+.rest-timer-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
+.rest-timer-actions button {
+  min-width: 2.6rem;
+  height: 2.4rem;
+  padding: 0 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rest-timer-actions button.is-skip { background: var(--neon-green); border-color: var(--neon-green); color: #000; }
+@media (max-width: 899px) {
+  .rest-timer { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 0.75rem); }
 }

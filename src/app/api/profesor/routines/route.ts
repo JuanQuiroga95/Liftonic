@@ -3,6 +3,12 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { query } from '@/lib/db';
 
+// Descanso en segundos (null = sin temporizador)
+const toRest = (v: any) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 900) : null;
+};
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,8 +45,8 @@ export async function POST(request: Request) {
         let orderIndex = 0;
         for (const ex of day.exercises) {
           await query(
-            'INSERT INTO daily_exercises (day_id, exercise_id, order_index, sets) VALUES ($1, $2, $3, $4)',
-            [dayId, ex.exercise_id, orderIndex, JSON.stringify(ex.sets || [])]
+            'INSERT INTO daily_exercises (day_id, exercise_id, order_index, sets, rest_seconds, rest_after_seconds) VALUES ($1, $2, $3, $4, $5, $6)',
+            [dayId, ex.exercise_id, orderIndex, JSON.stringify(ex.sets || []), toRest(ex.rest_seconds), toRest(ex.rest_after_seconds)]
           );
           orderIndex++;
         }

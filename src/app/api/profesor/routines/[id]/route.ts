@@ -3,6 +3,12 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { query } from '@/lib/db';
 
+// Descanso en segundos (null = sin temporizador)
+const toRest = (v: any) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 900) : null;
+};
+
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: routineId } = await params;
@@ -133,15 +139,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
           if (!exExists) {
             const exRes = await query(
-              'INSERT INTO daily_exercises (day_id, exercise_id, order_index, sets) VALUES ($1, $2, $3, $4) RETURNING id',
-              [dayId, ex.exercise_id, orderIndex, JSON.stringify(ex.sets || [])]
+              'INSERT INTO daily_exercises (day_id, exercise_id, order_index, sets, rest_seconds, rest_after_seconds) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+              [dayId, ex.exercise_id, orderIndex, JSON.stringify(ex.sets || []), toRest(ex.rest_seconds), toRest(ex.rest_after_seconds)]
             );
             exId = exRes.rows[0].id;
           } else {
             // Update sets and order
             await query(
-              'UPDATE daily_exercises SET exercise_id = $1, order_index = $2, sets = $3 WHERE id = $4',
-              [ex.exercise_id, orderIndex, JSON.stringify(ex.sets || []), exId]
+              'UPDATE daily_exercises SET exercise_id = $1, order_index = $2, sets = $3, rest_seconds = $4, rest_after_seconds = $5 WHERE id = $6',
+              [ex.exercise_id, orderIndex, JSON.stringify(ex.sets || []), toRest(ex.rest_seconds), toRest(ex.rest_after_seconds), exId]
             );
           }
           processedExerciseIds.add(exId);
